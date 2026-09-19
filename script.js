@@ -347,14 +347,26 @@
   CHORD_DATA.forEach(function (entry) { CHORD_DATA_BY_ID[entry.id] = entry; });
 
   /* ---------- internal chord viewer ---------- */
+  // Discrete speed steps rather than a continuous multiplier, so Faster/
+  // Slower always land on one of these exact, clearly-labeled values.
+  var SPEED_STEPS = [0.6, 0.75, 0.9, 1.0, 1.15, 1.3, 1.5];
+  var SPEED_LABELS = ["0.6x", "0.75x", "0.9x", "1.0x", "1.15x", "1.3x", "1.5x"];
+  var DEFAULT_SPEED_INDEX = 3; // 1.0x
+
   var chordViewerState = {
     currentId: null,
-    speedMultiplier: 1,
+    speedIndex: DEFAULT_SPEED_INDEX,
     autoScrollOn: false,
     autoScrollRaf: null,
     lastFrameTime: null,
     lastFocused: null,
-    highlightUnits: null
+    // Playback clock: currentTime (seconds) is the single source of truth.
+    // Both the highlighted chord and the scroll position are pure functions
+    // of currentTime / entry.scrollDuration — scroll follows the timeline,
+    // it never drives it.
+    currentTime: 0,
+    timeline: null,
+    activeTimelineIndex: -1
   };
 
   function chordViewerEls() {
@@ -402,7 +414,7 @@
 
     if (!chords.length) {
       p.textContent = text;
-      return p;
+      return { el: p, chordEls: [] };
     }
     if (chords[0].position > 0) {
       var lead = document.createElement("span");
@@ -410,6 +422,7 @@
       lead.textContent = text.slice(0, chords[0].position);
       p.appendChild(lead);
     }
+    var chunkEls = [];
     chords.forEach(function (c, i) {
       var end = (i + 1 < chords.length) ? chords[i + 1].position : text.length;
       var chunk = document.createElement("span");
@@ -423,8 +436,9 @@
       chunk.appendChild(over);
       chunk.appendChild(lyric);
       p.appendChild(chunk);
+      chunkEls.push(chunk);
     });
-    return p;
+    return { el: p, chordEls: chunkEls };
   }
 
   function renderChordSheet() {
@@ -445,7 +459,7 @@
     renderStrumItem(els.strumRow, "Easy", entry.easyStrummingPattern);
 
     els.sections.innerHTML = "";
-    var highlightUnits = [];
+    var sectionBuilds = [];
     entry.sections.forEach(function (section) {
       var block = document.createElement("div");
       block.className = "chord-section";
@@ -462,17 +476,20 @@
       block.appendChild(name);
 
       var lyricLines = (section.lines || []).filter(function (l) { return l.lyrics; });
+      var build = { heading: name, chordEls: null, chordWeights: null, lineChordEls: null };
 
       if (lyricLines.length) {
+        build.lineChordEls = [];
         lyricLines.forEach(function (line) {
-          var lineEl = renderLyricLine(line);
-          block.appendChild(lineEl);
-          highlightUnits.push({ el: lineEl, heading: name });
+          var rendered = renderLyricLine(line);
+          block.appendChild(rendered.el);
+          build.lineChordEls.push(rendered.chordEls);
         });
       } else {
         if (section.progression.length) {
           var row = document.createElement("div");
           row.className = "chord-progression-row";
+          var chordEls = [];
           section.progression.forEach(function (item) {
             var slot = document.createElement("div");
             slot.className = "chord-prog-item";
@@ -485,9 +502,13 @@
             slot.appendChild(chordEl);
             slot.appendChild(strumEl);
             row.appendChild(slot);
+            chordEls.push(slot);
           });
           block.appendChild(row);
-          highlightUnits.push({ el: row, heading: name });
+          build.chordEls = chordEls;
+          build.chordWeights = section.progression.map(function (c) {
+            return Math.max(1, (c.beats || 4) * (c.bars || 1));
+          });
         }
         if (!section.instrumental || !section.progression.length) {
           var pending = document.createElement("p");
@@ -500,25 +521,78 @@
       }
 
       els.sections.appendChild(block);
+      sectionBuilds.push({ section: section, build: build });
     });
-    chordViewerState.highlightUnits = highlightUnits;
-    updateActiveHighlight();
+
+    chordViewerState.timeline = buildPlaybackTimeline(sectionBuilds);
+    chordViewerState.activeTimelineIndex = -1;
+    applyHighlightForTime(0);
   }
 
-  function updateActiveHighlight() {
-    var els = chordViewerEls();
-    var units = chordViewerState.highlightUnits;
-    if (!els.body || !units || !units.length) return;
-    var bodyRect = els.body.getBoundingClientRect();
-    var playheadY = bodyRect.top + bodyRect.height * 0.32;
-    var activeUnit = units[0];
-    units.forEach(function (unit) {
-      if (unit.el.getBoundingClientRect().top <= playheadY) activeUnit = unit;
+  // Flattens sections (respecting repeatCount and per-chord beats*bars
+  // weight) into an ordered list of {el, heading, startFrac, endFrac}
+  // spanning the whole song as fractions of total playback time. Repeats
+  // reuse the same DOM elements — a 4-chord progression played ×4 cycles
+  // through the same 4 elements four times, it doesn't clone them.
+  function buildPlaybackTimeline(sectionBuilds) {
+    var timeline = [];
+    sectionBuilds.forEach(function (entry) {
+      var section = entry.section;
+      var build = entry.build;
+      var repeatCount = section.repeatCount || 1;
+      for (var r = 0; r < repeatCount; r++) {
+        if (build.chordEls && build.chordEls.length) {
+          build.chordEls.forEach(function (el, i) {
+            timeline.push({ el: el, heading: build.heading, weight: build.chordWeights[i] });
+          });
+        } else if (build.lineChordEls && build.lineChordEls.length) {
+          build.lineChordEls.forEach(function (chordEls) {
+            (chordEls.length ? chordEls : [null]).forEach(function (el) {
+              timeline.push({ el: el, heading: build.heading, weight: 4 });
+            });
+          });
+        } else {
+          // Nothing to highlight (e.g. an empty outro) — still give it
+          // time in the timeline so scroll progress passes through it.
+          timeline.push({ el: null, heading: build.heading, weight: 8 });
+        }
+      }
     });
-    units.forEach(function (unit) {
-      unit.el.classList.toggle("chord-row-active", unit === activeUnit);
-      if (unit.heading) unit.heading.classList.toggle("chord-section-active", unit.heading === activeUnit.heading);
+    var total = timeline.reduce(function (sum, t) { return sum + t.weight; }, 0) || 1;
+    var acc = 0;
+    timeline.forEach(function (t) {
+      t.startFrac = acc / total;
+      acc += t.weight;
+      t.endFrac = acc / total;
     });
+    return timeline;
+  }
+
+  // The one function that decides which chord is "now" — driven purely by
+  // playback progress (0 to 1), never by scroll position or which element
+  // happens to be visually centered.
+  function applyHighlightForTime(progressFrac) {
+    var timeline = chordViewerState.timeline;
+    if (!timeline || !timeline.length) return;
+    var idx = timeline.length - 1;
+    for (var i = 0; i < timeline.length; i++) {
+      if (progressFrac < timeline[i].endFrac) { idx = i; break; }
+    }
+    if (idx === chordViewerState.activeTimelineIndex) return;
+    chordViewerState.activeTimelineIndex = idx;
+    var activeEl = timeline[idx].el;
+    var activeHeading = timeline[idx].heading;
+
+    var seen = new Set();
+    timeline.forEach(function (t) {
+      if (!t.el || seen.has(t.el)) return;
+      seen.add(t.el);
+      t.el.classList.toggle("chord-row-active", t.el === activeEl);
+    });
+    document.querySelectorAll(".chord-section-name.chord-section-active").forEach(function (h) {
+      if (h !== activeHeading) h.classList.remove("chord-section-active");
+    });
+    if (activeHeading) activeHeading.classList.add("chord-section-active");
   }
 
   function setPlayButtonState(isPlaying) {
@@ -530,12 +604,7 @@
 
   function updateSpeedDisplay() {
     var els = chordViewerEls();
-    if (!els.speedDisplay) return;
-    // toFixed(1) alone mis-rounds values like 0.85 (binary floating point
-    // stores it as very slightly under 0.85, e.g. 0.84999...), so nudge by
-    // a tiny epsilon first to get consistent "round half up" display.
-    var rounded = Math.round((chordViewerState.speedMultiplier + 1e-9) * 10) / 10;
-    els.speedDisplay.textContent = rounded.toFixed(1) + "x";
+    if (els.speedDisplay) els.speedDisplay.textContent = SPEED_LABELS[chordViewerState.speedIndex];
   }
 
   function openChordViewer(id) {
@@ -543,7 +612,8 @@
     if (!els.root) return;
     stopAutoScroll();
     chordViewerState.currentId = id;
-    chordViewerState.speedMultiplier = 1;
+    chordViewerState.speedIndex = DEFAULT_SPEED_INDEX;
+    chordViewerState.currentTime = 0;
     updateSpeedDisplay();
     chordViewerState.lastFocused = document.activeElement;
 
@@ -575,29 +645,21 @@
     if (!els.body || !entry) return;
     chordViewerState.autoScrollOn = true;
     chordViewerState.lastFrameTime = null;
-    // Real song-length pacing means sub-1px-per-frame increments, and the
-    // scrollTop property only stores whole pixels — accumulating with
-    // `scrollTop += tinyAmount` rounds the fraction away every frame and
-    // never actually moves. Track position as a float outside the DOM instead.
-    chordViewerState.scrollPosition = els.body.scrollTop;
     setPlayButtonState(true);
 
     function step(timestamp) {
       if (!chordViewerState.autoScrollOn) return;
-      var hasOverflow = els.body.scrollHeight > els.body.clientHeight + 1;
-      if (hasOverflow && chordViewerState.lastFrameTime != null) {
-        // If the person manually scrolled, adopt their position instead of
-        // fighting it — the pattern continues on from wherever they left it.
-        if (Math.abs(els.body.scrollTop - chordViewerState.scrollPosition) > 1) {
-          chordViewerState.scrollPosition = els.body.scrollTop;
-        }
+      if (chordViewerState.lastFrameTime != null) {
         var deltaSec = (timestamp - chordViewerState.lastFrameTime) / 1000;
-        var distance = els.body.scrollHeight - els.body.clientHeight;
-        var basePxPerSec = distance / (entry.scrollDuration || 150);
-        chordViewerState.scrollPosition += basePxPerSec * chordViewerState.speedMultiplier * deltaSec;
-        els.body.scrollTop = chordViewerState.scrollPosition;
-        updateActiveHighlight();
-        if (chordViewerState.scrollPosition + els.body.clientHeight >= els.body.scrollHeight - 1) {
+        var duration = entry.scrollDuration || 150;
+        chordViewerState.currentTime += deltaSec * SPEED_STEPS[chordViewerState.speedIndex];
+        var progressFrac = Math.min(1, chordViewerState.currentTime / duration);
+
+        applyHighlightForTime(progressFrac);
+        var maxScroll = els.body.scrollHeight - els.body.clientHeight;
+        if (maxScroll > 0) els.body.scrollTop = progressFrac * maxScroll;
+
+        if (progressFrac >= 1) {
           stopAutoScroll();
           return;
         }
@@ -622,9 +684,8 @@
     else startAutoScroll();
   }
 
-  function changeSpeed(delta) {
-    var next = Math.round(Math.min(2.0, Math.max(0.4, chordViewerState.speedMultiplier + delta)) * 100) / 100;
-    chordViewerState.speedMultiplier = next;
+  function changeSpeed(direction) {
+    chordViewerState.speedIndex = Math.min(SPEED_STEPS.length - 1, Math.max(0, chordViewerState.speedIndex + direction));
     updateSpeedDisplay();
   }
 
@@ -674,22 +735,9 @@
     var playBtn = document.getElementById("chord-play-toggle");
     if (playBtn) playBtn.addEventListener("click", togglePlay);
     var speedDown = document.getElementById("chord-speed-down");
-    if (speedDown) speedDown.addEventListener("click", function () { changeSpeed(-0.15); });
+    if (speedDown) speedDown.addEventListener("click", function () { changeSpeed(-1); });
     var speedUp = document.getElementById("chord-speed-up");
-    if (speedUp) speedUp.addEventListener("click", function () { changeSpeed(0.15); });
-
-    var scrollBody = document.getElementById("chord-sheet-body");
-    if (scrollBody) {
-      var highlightTicking = false;
-      scrollBody.addEventListener("scroll", function () {
-        if (highlightTicking) return;
-        highlightTicking = true;
-        window.requestAnimationFrame(function () {
-          updateActiveHighlight();
-          highlightTicking = false;
-        });
-      }, { passive: true });
-    }
+    if (speedUp) speedUp.addEventListener("click", function () { changeSpeed(1); });
 
     initChordEmbers();
   }

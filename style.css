@@ -1166,15 +1166,15 @@ body.chord-viewer-open { overflow: hidden; }
   margin-left: 10px;
 }
 
-.chord-progression-row {
+.chord-progression-row { display: flex; flex-wrap: wrap; gap: 30px; margin: 4px 0 8px; }
+.chord-prog-item {
   display: flex;
-  flex-wrap: wrap;
-  gap: 30px;
-  margin: 4px 0 8px;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
   border-radius: 8px;
   transition: background-color 0.35s ease, box-shadow 0.35s ease;
 }
-.chord-prog-item { display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .chord-prog-chord {
   font-family: var(--font-mono);
   font-weight: 700;
@@ -1196,10 +1196,14 @@ body.chord-viewer-open { overflow: hidden; }
   line-height: 1.6;
   color: var(--ink);
   margin: 34px 0 0;
-  border-radius: 6px;
+}
+.chord-chunk {
+  position: relative;
+  display: inline-block;
+  white-space: pre;
+  border-radius: 4px;
   transition: background-color 0.35s ease, box-shadow 0.35s ease;
 }
-.chord-chunk { position: relative; display: inline-block; white-space: pre; }
 .chord-chunk-plain { white-space: pre; }
 .chord-chunk-chord {
   position: absolute;
