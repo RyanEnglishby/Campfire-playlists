@@ -404,6 +404,7 @@
   var SPEED_STEPS = [0.6, 0.75, 0.9, 1.0, 1.15, 1.3, 1.5];
   var SPEED_LABELS = ["0.6x", "0.75x", "0.9x", "1.0x", "1.15x", "1.3x", "1.5x"];
   var DEFAULT_SPEED_INDEX = 3; // 1.0x
+  var AUTOSCROLL_TOP_MARGIN = 24; // px of breathing room above the active row so it's never flush against the top edge
 
   var chordViewerState = {
     currentId: null,
@@ -730,7 +731,25 @@
 
         applyHighlightForTime(chordViewerState.currentTime);
         var maxScroll = els.body.scrollHeight - els.body.clientHeight;
-        if (maxScroll > 0) els.body.scrollTop = progressFrac * maxScroll;
+        if (maxScroll > 0) {
+          // Follow the actual active row rather than a straight time-fraction
+          // of the whole sheet: sections vary in how much vertical space they
+          // take per second, so a purely proportional scroll can drift the
+          // active row to the very top edge (or past it) on some songs/mobile
+          // heights. Falls back to the old proportional scroll if, for any
+          // reason, nothing is marked active yet.
+          var activeRow = els.body.querySelector(".chord-row-active");
+          var targetScroll;
+          if (activeRow) {
+            // getBoundingClientRect deltas (not offsetTop) so this is correct
+            // regardless of which ancestor happens to be the positioning context.
+            var rowTopWithinBody = activeRow.getBoundingClientRect().top - els.body.getBoundingClientRect().top + els.body.scrollTop;
+            targetScroll = rowTopWithinBody - AUTOSCROLL_TOP_MARGIN;
+          } else {
+            targetScroll = progressFrac * maxScroll;
+          }
+          els.body.scrollTop = Math.max(0, Math.min(maxScroll, targetScroll));
+        }
 
         if (progressFrac >= 1) {
           stopAutoScroll();
