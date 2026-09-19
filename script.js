@@ -102,18 +102,223 @@
     "Brown Eyed Girl", "Ho Hey", "I'm Yours"
   ];
 
-  /* User-confirmed progressions, keyed by song slug. Everything else
-     falls back to the empty default below. */
-  var CHORD_SECTION_OVERRIDES = {
-    "wagon-wheel": [
-      { name: "Intro", progression: ["G", "D", "Em", "C"], cue: "" },
-      { name: "Verse", progression: ["G", "D", "Em", "C"], cue: "" },
-      { name: "Chorus", progression: ["G", "D", "C", "C"], cue: "" }
-    ]
+  /* User-confirmed progressions and metadata, keyed by song slug.
+     Only the fields present on an entry are overridden — everything
+     else still comes from the song's original data. Any song not
+     listed here keeps the empty "not written down yet" default.
+     These are simplified campfire arrangements, not exact studio
+     transcriptions — songs marked simplifiedArrangement show a small
+     "Campfire arrangement" note in the viewer. Wagon Wheel's entry is
+     unchanged from before (sections only). */
+  var CHORD_OVERRIDES = {
+    "wagon-wheel": {
+      sections: [
+        { name: "Intro", progression: ["G", "D", "Em", "C"], cue: "" },
+        { name: "Verse", progression: ["G", "D", "Em", "C"], cue: "" },
+        { name: "Chorus", progression: ["G", "D", "C", "C"], cue: "" }
+      ]
+    },
+    "something-in-the-orange": {
+      knownChords: "Em7, D/F#, G, Cadd9",
+      sections: [
+        { name: "Intro", progression: ["Em7", "D/F#", "G", "D/F#", "Em7"], cue: "" },
+        { name: "Verse", progression: ["Em7", "D/F#", "G", "D/F#", "Em7"], cue: "" },
+        { name: "Chorus", progression: ["Cadd9", "G", "D", "Em7"], cue: "" },
+        { name: "Outro", progression: ["Cadd9", "G", "D", "Em7"], cue: "" }
+      ]
+    },
+    "revival": {
+      sections: [
+        { name: "Intro", progression: ["Em", "G", "C", "G"], cue: "" },
+        { name: "Verse", progression: ["Em", "G", "C", "G"], cue: "" },
+        { name: "Chorus", progression: ["Em", "G", "C", "G"], cue: "" },
+        { name: "Interlude", progression: ["Em", "G", "C", "G"], cue: "" },
+        { name: "Outro", progression: ["Em", "G", "C", "G"], cue: "" }
+      ]
+    },
+    "oklahoma-smokeshow": {
+      capo: "Capo 1",
+      sections: [
+        { name: "Intro", progression: ["G", "C", "Em", "D"], cue: "" },
+        { name: "Verse", progression: ["G", "C", "Em", "D", "G"], cue: "" },
+        { name: "Chorus", progression: ["C", "G", "D", "Em"], cue: "" },
+        { name: "Break", progression: ["C", "G", "D", "Em"], cue: "" },
+        { name: "Outro", progression: ["C", "G", "D", "Em"], cue: "" }
+      ]
+    },
+    "east-side-of-sorrow": {
+      capo: "Capo 2",
+      sections: [
+        { name: "Verse", progression: ["G", "C", "G", "D", "G", "C", "G", "D", "G", "C", "D"], cue: "" },
+        { name: "Chorus", progression: ["C", "G", "D", "G", "C", "G", "D", "G", "C", "D", "G"], cue: "" },
+        { name: "Bridge", progression: ["C", "G", "D", "G"], cue: "" },
+        { name: "Outro", progression: ["G", "C", "G", "D", "G", "C", "D"], cue: "" }
+      ]
+    },
+    "wonderwall": {
+      difficulty: "Easy / Medium",
+      knownChords: "Em7, G, Dsus4, A7sus4, Cadd9",
+      simplifiedArrangement: true,
+      sections: [
+        { name: "Verse", progression: ["Em7", "G", "Dsus4", "A7sus4"], cue: "" },
+        { name: "Pre-Chorus", progression: ["Cadd9", "Dsus4", "Em7"], cue: "" },
+        { name: "Chorus", progression: ["Cadd9", "Em7", "G", "Em7"], cue: "" }
+      ]
+    },
+    "take-me-home-country-roads": {
+      knownChords: "G, Em, D, C, F, D7",
+      sections: [
+        { name: "Intro", progression: ["G"], cue: "" },
+        { name: "Verse", progression: ["G", "Em", "D", "C", "G"], cue: "" },
+        { name: "Chorus", progression: ["G", "D", "Em", "C", "G", "D", "C", "G"], cue: "" },
+        { name: "Bridge", progression: ["Em", "D/F#", "G", "C", "G", "D", "Em", "F", "C", "G", "D", "D7"], cue: "" },
+        { name: "Outro", progression: ["D", "G"], cue: "" }
+      ]
+    },
+    "brown-eyed-girl": {
+      knownChords: "G, C, D, Em, D7",
+      sections: [
+        { name: "Intro", progression: ["G", "C", "G", "D"], cue: "" },
+        { name: "Verse", progression: ["G", "C", "G", "D"], cue: "" },
+        { name: "Pre-Chorus", progression: ["C", "D", "G", "Em", "C", "D", "G", "D7"], cue: "" },
+        { name: "Chorus", progression: ["G", "D", "C", "G", "Em", "C", "D"], cue: "" },
+        { name: "Outro", progression: ["G", "C", "G", "D"], cue: "" }
+      ]
+    },
+    "ripple": {
+      difficulty: "Easy / Medium",
+      knownChords: "G, C, D, Am, Em",
+      simplifiedArrangement: true,
+      sections: [
+        { name: "Verse", progression: ["G", "C", "G", "C", "G", "D"], cue: "" },
+        { name: "Chorus", progression: ["C", "G", "Am", "C", "G", "D", "C", "G"], cue: "" },
+        { name: "Outro", progression: ["G", "C", "G", "D", "G"], cue: "" }
+      ]
+    },
+    "heading-south": {
+      capo: "Capo 4",
+      difficulty: "Easy",
+      knownChords: "Am, F, C, G",
+      sections: [
+        { name: "Intro", progression: ["C", "G", "Am", "F"], cue: "" },
+        { name: "Verse", progression: ["Am", "F", "C", "G"], cue: "" },
+        { name: "Chorus", progression: ["Am", "F", "C", "G"], cue: "" },
+        { name: "Outro", progression: ["Am", "F", "C", "G"], cue: "" }
+      ]
+    },
+    "i-remember-everything": {
+      difficulty: "Easy",
+      knownChords: "Am, C, G, F",
+      simplifiedArrangement: true,
+      sections: [
+        { name: "Intro", progression: ["Am", "C", "G", "Am", "C", "G"], cue: "" },
+        { name: "Verse", progression: ["Am", "C", "G"], cue: "" },
+        { name: "Chorus", progression: ["F", "C", "G", "Am"], cue: "" }
+      ]
+    },
+    "from-austin": {
+      difficulty: "Medium",
+      knownChords: "G, C, Em, D",
+      simplifiedArrangement: true,
+      sections: [
+        { name: "Verse", progression: ["G", "C", "Em", "D"], cue: "" },
+        { name: "Chorus", progression: ["C", "G", "D", "Em"], cue: "" },
+        { name: "Outro", progression: ["G", "C", "Em", "D"], cue: "" }
+      ]
+    },
+    "sun-to-me": {
+      difficulty: "Easy",
+      knownChords: "Am, G, C, F",
+      simplifiedArrangement: true,
+      sections: [
+        { name: "Intro", progression: ["Am", "G", "C", "F"], cue: "" },
+        { name: "Verse", progression: ["Am", "G", "C", "F"], cue: "" },
+        { name: "Chorus", progression: ["F", "C", "G", "Am"], cue: "" },
+        { name: "Outro", progression: ["Am", "G", "C", "F"], cue: "" }
+      ]
+    },
+    "condemned": {
+      capo: "Capo 1",
+      difficulty: "Medium",
+      knownChords: "Am, E, Bm, C#m",
+      simplifiedArrangement: true,
+      sections: [
+        { name: "Verse", progression: ["Am", "E", "Bm", "C#m"], cue: "" },
+        { name: "Pre-Chorus", progression: ["Am", "E", "Bm", "C#m"], cue: "" },
+        { name: "Chorus", progression: ["Am", "E", "Bm", "C#m"], cue: "" }
+      ]
+    },
+    "ho-hey": {
+      difficulty: "Easy",
+      knownChords: "C, F, Am, G",
+      sections: [
+        { name: "Intro", progression: ["C", "F"], cue: "" },
+        { name: "Verse", progression: ["C", "F", "C", "F", "Am", "G", "C"], cue: "" },
+        { name: "Chorus", progression: ["Am", "G", "C"], cue: "" },
+        { name: "Bridge", progression: ["F", "G"], cue: "" },
+        { name: "Outro", progression: ["Am", "G", "C"], cue: "" }
+      ]
+    },
+    "i-m-yours": {
+      capo: "Capo 4",
+      difficulty: "Easy",
+      knownChords: "G, D, Em, C, A7, Bm",
+      sections: [
+        { name: "Intro", progression: ["G", "D", "Em", "C"], cue: "" },
+        { name: "Verse", progression: ["G", "D", "Em", "C"], cue: "" },
+        { name: "Chorus", progression: ["G", "D", "Em", "C"], cue: "" },
+        { name: "Bridge", progression: ["G", "D", "Em", "D", "C", "A7", "G", "Bm", "Em", "D", "C", "A7"], cue: "" },
+        { name: "Outro", progression: ["G", "D", "Em", "C"], cue: "" }
+      ]
+    },
+    "the-boxer": {
+      difficulty: "Medium",
+      knownChords: "C, F, G, Am",
+      simplifiedArrangement: true,
+      sections: [
+        { name: "Verse", progression: ["C", "F", "C", "G", "C", "F", "G", "C"], cue: "" },
+        { name: "Chorus", progression: ["Am", "G", "C"], cue: "" },
+        { name: "Outro", progression: ["C", "F", "G", "C"], cue: "" }
+      ]
+    },
+    "angel-from-montgomery": {
+      capo: "Capo 2",
+      difficulty: "Easy",
+      knownChords: "G, C, D, D7",
+      simplifiedArrangement: true,
+      sections: [
+        { name: "Intro", progression: ["G", "C", "G", "C"], cue: "" },
+        { name: "Verse", progression: ["G", "C", "G", "C", "G", "C", "D", "D7", "G"], cue: "" },
+        { name: "Chorus", progression: ["G", "C", "G", "G", "C", "D", "G"], cue: "" },
+        { name: "Outro", progression: ["G", "C", "G"], cue: "" }
+      ]
+    },
+    "society": {
+      capo: null,
+      difficulty: "Medium",
+      knownChords: "G, D, A, Bm, F#m",
+      sections: [
+        { name: "Intro", progression: ["G", "Bm"], cue: "" },
+        { name: "Verse", progression: ["D", "A", "D", "G", "A", "Bm"], cue: "" },
+        { name: "Chorus", progression: ["G", "D", "A", "G"], cue: "" },
+        { name: "Bridge", progression: ["Bm", "F#m", "G", "D", "A"], cue: "" },
+        { name: "Outro", progression: ["G", "D", "A", "G"], cue: "" }
+      ]
+    },
+    "no-hard-feelings": {
+      difficulty: "Medium",
+      sections: [
+        { name: "Intro", progression: ["C", "Em", "Am", "F", "Em", "F", "G"], cue: "" },
+        { name: "Verse", progression: ["C", "Em", "Am", "F", "Em", "F", "G"], cue: "" },
+        { name: "Chorus", progression: ["F", "G", "F", "G", "Am", "Em", "F"], cue: "" },
+        { name: "Outro", progression: ["C", "Em", "Am", "F", "G", "C"], cue: "" }
+      ]
+    }
   };
 
   function toChordEntry(song, category) {
     var id = slugify(song.title);
+    var o = CHORD_OVERRIDES[id] || {};
     return {
       id: id,
       title: song.title,
@@ -121,12 +326,13 @@
       year: song.year,
       category: category,
       favorite: !!song.pick,
-      difficulty: usesBarreF(song.chords) ? "Intermediate" : "Easy",
-      capo: song.capo,
+      difficulty: o.difficulty || (usesBarreF(song.chords) ? "Intermediate" : "Easy"),
+      capo: "capo" in o ? o.capo : song.capo,
       tuning: "Standard",
-      knownChords: song.chords,
+      knownChords: o.knownChords || song.chords,
       spotify: song.spotify,
-      sections: CHORD_SECTION_OVERRIDES[id] || [
+      simplifiedArrangement: !!o.simplifiedArrangement,
+      sections: o.sections || [
         { name: "Intro", progression: [], cue: "" },
         { name: "Verse", progression: [], cue: "" },
         { name: "Chorus", progression: [], cue: "" }
@@ -255,6 +461,9 @@
       favBadge.className = "chord-badge chord-favorite";
       favBadge.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8c.7 2.9 1.6 5 2.7 6.1 1.2 1.2 3.3 2 6.3 2.6-3 .8-5 1.6-6.3 2.8-1.2 1.2-2 3.3-2.7 6.4-.6-3-1.5-5.1-2.7-6.3-1.2-1.2-3.3-2.1-6.3-2.9 3-.6 5-1.4 6.3-2.6 1.2-1.2 2-3.2 2.7-6.1z" fill="currentColor"/></svg> favorite';
       els.badges.appendChild(favBadge);
+    }
+    if (entry.simplifiedArrangement) {
+      addBadge(els.badges, "Campfire arrangement");
     }
 
     var displayChords = chordViewerState.simplified ? simplifyChordList(entry.knownChords) : entry.knownChords;
