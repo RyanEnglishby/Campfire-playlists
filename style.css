@@ -1146,6 +1146,25 @@ body.chord-viewer-open { overflow: hidden; }
   padding: 22px 24px 28px;
 }
 
+.chord-countin {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 5;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 110px;
+  color: var(--ember);
+  text-shadow: 0 0 50px rgba(255, 122, 61, 0.55);
+  background: rgba(233, 221, 195, 0.55);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.chord-countin.is-visible { opacity: 1; }
+
 .chord-section { margin-bottom: 28px; }
 .chord-section:last-child { margin-bottom: 0; }
 .chord-section-name {

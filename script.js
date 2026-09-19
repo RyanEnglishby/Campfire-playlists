@@ -100,29 +100,36 @@
      a lyric section (Verse/Chorus/Bridge/Pre-Chorus). No lyrics have
      been supplied yet for any song, so every lyric section's `lines`
      stays empty and renders an honest "lyrics not added yet" note
-     next to its chords — never invented or fetched. `beats`/`bars`
-     assume plain 4/4 time (one bar per chord), not a claim about the
-     original recording. scrollDuration is an auto-estimate from how
-     much content a song has, meant to be tuned by ear later. */
+     next to its chords — never invented or fetched. `beats` assumes
+     plain 4/4 time, not a claim about the original recording.
+
+     Playback timing is driven by real musical time (bpm/timeSignature/
+     countInBars), not by scroll position or an estimated duration.
+     DEFAULT_BPM is a plain placeholder tempo for songs that haven't
+     been tuned yet — "something-in-the-orange" is the one song with a
+     deliberately-chosen bpm right now (a reasonable slow-ballad
+     starting point, not a claim about the actual recording's tempo);
+     every other song still uses the shared default until each is
+     tuned by ear the same way. */
   var INSTRUMENTAL_SECTION_NAMES = { "Intro": true, "Outro": true, "Break": true, "Interlude": true };
   var DEFAULT_STRUM = "↓ ↓↑ ↑↓↑";
   var DEFAULT_STRUM_EASY = "↓ ↓ ↓ ↓";
+  var DEFAULT_BPM = 90;
 
   function makeSection(name, chords, repeatCount) {
     return {
       name: name,
       repeatCount: repeatCount || 1,
       instrumental: !!INSTRUMENTAL_SECTION_NAMES[name],
-      progression: chords.map(function (c) { return { chord: c, beats: 4, bars: 1 }; }),
+      progression: chords.map(function (c) { return { chord: c, beats: 4 }; }),
       lines: []
     };
   }
 
   function makeSong(fields) {
-    var slots = fields.sections.reduce(function (sum, s) {
-      return sum + s.progression.length * s.repeatCount;
-    }, 0);
-    fields.scrollDuration = fields.scrollDuration || Math.max(90, Math.min(240, Math.round(slots * 6 / 10) * 10));
+    fields.bpm = fields.bpm || DEFAULT_BPM;
+    fields.timeSignature = fields.timeSignature || "4/4";
+    fields.countInBars = fields.countInBars != null ? fields.countInBars : 1;
     fields.strummingPattern = fields.strummingPattern || DEFAULT_STRUM;
     fields.easyStrummingPattern = fields.easyStrummingPattern || DEFAULT_STRUM_EASY;
     fields.tuning = fields.tuning || "Standard";
@@ -142,7 +149,9 @@
       ]
     }),
     "something-in-the-orange": makeSong({
-      difficulty: "Easy", capo: null,
+      // Tuning test song: a slow acoustic-ballad tempo as a starting point,
+      // not a verified tempo for the actual recording — adjust by ear.
+      difficulty: "Easy", capo: null, bpm: 78, timeSignature: "4/4", countInBars: 1,
       sections: [
         makeSection("Intro", ["Em7", "D/F#", "G", "D/F#", "Em7"]),
         makeSection("Verse", ["Em7", "D/F#", "G", "D/F#", "Em7"]),
@@ -330,7 +339,9 @@
       tuning: data.tuning,
       strummingPattern: data.strummingPattern,
       easyStrummingPattern: data.easyStrummingPattern,
-      scrollDuration: data.scrollDuration,
+      bpm: data.bpm,
+      timeSignature: data.timeSignature,
+      countInBars: data.countInBars,
       sections: data.sections
     };
   }
@@ -360,13 +371,15 @@
     autoScrollRaf: null,
     lastFrameTime: null,
     lastFocused: null,
-    // Playback clock: currentTime (seconds) is the single source of truth.
-    // Both the highlighted chord and the scroll position are pure functions
-    // of currentTime / entry.scrollDuration — scroll follows the timeline,
-    // it never drives it.
+    // Playback clock: currentTime (seconds since the count-in ended) is the
+    // single source of truth. Both the highlighted chord and the scroll
+    // position are pure functions of currentTime against the song's real
+    // bpm-derived timeline — scroll follows the timeline, it never drives it.
     currentTime: 0,
     timeline: null,
-    activeTimelineIndex: -1
+    activeTimelineIndex: -1,
+    countInActive: false,
+    countInTimer: null
   };
 
   function chordViewerEls() {
@@ -476,7 +489,7 @@
       block.appendChild(name);
 
       var lyricLines = (section.lines || []).filter(function (l) { return l.lyrics; });
-      var build = { heading: name, chordEls: null, chordWeights: null, lineChordEls: null };
+      var build = { heading: name, chordEls: null, chordBeats: null, lineChordEls: null };
 
       if (lyricLines.length) {
         build.lineChordEls = [];
@@ -506,9 +519,7 @@
           });
           block.appendChild(row);
           build.chordEls = chordEls;
-          build.chordWeights = section.progression.map(function (c) {
-            return Math.max(1, (c.beats || 4) * (c.bars || 1));
-          });
+          build.chordBeats = section.progression.map(function (c) { return c.beats || 4; });
         }
         if (!section.instrumental || !section.progression.length) {
           var pending = document.createElement("p");
@@ -524,67 +535,81 @@
       sectionBuilds.push({ section: section, build: build });
     });
 
-    chordViewerState.timeline = buildPlaybackTimeline(sectionBuilds);
+    chordViewerState.timeline = buildPlaybackTimeline(entry, sectionBuilds);
     chordViewerState.activeTimelineIndex = -1;
     applyHighlightForTime(0);
   }
 
-  // Flattens sections (respecting repeatCount and per-chord beats*bars
-  // weight) into an ordered list of {el, heading, startFrac, endFrac}
-  // spanning the whole song as fractions of total playback time. Repeats
-  // reuse the same DOM elements — a 4-chord progression played ×4 cycles
-  // through the same 4 elements four times, it doesn't clone them.
-  function buildPlaybackTimeline(sectionBuilds) {
+  function parseBeatsPerBar(timeSignature) {
+    var m = /^(\d+)\s*\/\s*(\d+)$/.exec(timeSignature || "");
+    return m ? parseInt(m[1], 10) : 4;
+  }
+
+  // Flattens sections (respecting repeatCount and each chord's real
+  // duration in seconds, from bpm + beats) into an ordered list of
+  // {el, heading, startSec, endSec} spanning the whole song. Repeats reuse
+  // the same DOM elements — a 4-chord progression played ×4 cycles through
+  // the same 4 elements four times, it doesn't clone them. This is genuine
+  // musical time: scroll position plays no part in computing it.
+  function buildPlaybackTimeline(entry, sectionBuilds) {
+    var secondsPerBeat = 60 / (entry.bpm || DEFAULT_BPM);
+    var beatsPerBar = parseBeatsPerBar(entry.timeSignature);
     var timeline = [];
-    sectionBuilds.forEach(function (entry) {
-      var section = entry.section;
-      var build = entry.build;
+    sectionBuilds.forEach(function (item) {
+      var section = item.section;
+      var build = item.build;
       var repeatCount = section.repeatCount || 1;
       for (var r = 0; r < repeatCount; r++) {
         if (build.chordEls && build.chordEls.length) {
           build.chordEls.forEach(function (el, i) {
-            timeline.push({ el: el, heading: build.heading, weight: build.chordWeights[i] });
+            timeline.push({ el: el, heading: build.heading, duration: build.chordBeats[i] * secondsPerBeat });
           });
         } else if (build.lineChordEls && build.lineChordEls.length) {
           build.lineChordEls.forEach(function (chordEls) {
             (chordEls.length ? chordEls : [null]).forEach(function (el) {
-              timeline.push({ el: el, heading: build.heading, weight: 4 });
+              timeline.push({ el: el, heading: build.heading, duration: 4 * secondsPerBeat });
             });
           });
         } else {
           // Nothing to highlight (e.g. an empty outro) — still give it
           // time in the timeline so scroll progress passes through it.
-          timeline.push({ el: null, heading: build.heading, weight: 8 });
+          timeline.push({ el: null, heading: build.heading, duration: beatsPerBar * secondsPerBeat });
         }
       }
     });
-    var total = timeline.reduce(function (sum, t) { return sum + t.weight; }, 0) || 1;
     var acc = 0;
     timeline.forEach(function (t) {
-      t.startFrac = acc / total;
-      acc += t.weight;
-      t.endFrac = acc / total;
+      t.startSec = acc;
+      acc += t.duration;
+      t.endSec = acc;
     });
-    return timeline;
+    return {
+      entries: timeline,
+      totalSec: acc,
+      countInSec: (entry.countInBars || 0) * beatsPerBar * secondsPerBeat,
+      secondsPerBeat: secondsPerBeat,
+      beatsPerBar: beatsPerBar
+    };
   }
 
   // The one function that decides which chord is "now" — driven purely by
-  // playback progress (0 to 1), never by scroll position or which element
-  // happens to be visually centered.
-  function applyHighlightForTime(progressFrac) {
+  // the playback clock (elapsed seconds since the count-in ended), never by
+  // scroll position or which element happens to be visually centered.
+  function applyHighlightForTime(elapsedSec) {
     var timeline = chordViewerState.timeline;
-    if (!timeline || !timeline.length) return;
-    var idx = timeline.length - 1;
-    for (var i = 0; i < timeline.length; i++) {
-      if (progressFrac < timeline[i].endFrac) { idx = i; break; }
+    if (!timeline || !timeline.entries.length) return;
+    var entries = timeline.entries;
+    var idx = entries.length - 1;
+    for (var i = 0; i < entries.length; i++) {
+      if (elapsedSec < entries[i].endSec) { idx = i; break; }
     }
     if (idx === chordViewerState.activeTimelineIndex) return;
     chordViewerState.activeTimelineIndex = idx;
-    var activeEl = timeline[idx].el;
-    var activeHeading = timeline[idx].heading;
+    var activeEl = entries[idx].el;
+    var activeHeading = entries[idx].heading;
 
     var seen = new Set();
-    timeline.forEach(function (t) {
+    entries.forEach(function (t) {
       if (!t.el || seen.has(t.el)) return;
       seen.add(t.el);
       t.el.classList.toggle("chord-row-active", t.el === activeEl);
@@ -642,20 +667,25 @@
   function startAutoScroll() {
     var els = chordViewerEls();
     var entry = CHORD_DATA_BY_ID[chordViewerState.currentId];
-    if (!els.body || !entry) return;
-    chordViewerState.autoScrollOn = true;
-    chordViewerState.lastFrameTime = null;
-    setPlayButtonState(true);
+    var timeline = chordViewerState.timeline;
+    if (!els.body || !entry || !timeline) return;
+
+    function beginPlayback() {
+      chordViewerState.autoScrollOn = true;
+      chordViewerState.lastFrameTime = null;
+      setPlayButtonState(true);
+      chordViewerState.autoScrollRaf = window.requestAnimationFrame(step);
+    }
 
     function step(timestamp) {
       if (!chordViewerState.autoScrollOn) return;
       if (chordViewerState.lastFrameTime != null) {
         var deltaSec = (timestamp - chordViewerState.lastFrameTime) / 1000;
-        var duration = entry.scrollDuration || 150;
         chordViewerState.currentTime += deltaSec * SPEED_STEPS[chordViewerState.speedIndex];
-        var progressFrac = Math.min(1, chordViewerState.currentTime / duration);
+        var totalSec = timeline.totalSec || 1;
+        var progressFrac = Math.min(1, chordViewerState.currentTime / totalSec);
 
-        applyHighlightForTime(progressFrac);
+        applyHighlightForTime(chordViewerState.currentTime);
         var maxScroll = els.body.scrollHeight - els.body.clientHeight;
         if (maxScroll > 0) els.body.scrollTop = progressFrac * maxScroll;
 
@@ -667,10 +697,65 @@
       chordViewerState.lastFrameTime = timestamp;
       chordViewerState.autoScrollRaf = window.requestAnimationFrame(step);
     }
-    chordViewerState.autoScrollRaf = window.requestAnimationFrame(step);
+
+    // Count in only for a fresh start, never when resuming mid-song.
+    if (chordViewerState.currentTime <= 0 && timeline.countInSec > 0) {
+      runCountIn(timeline, beginPlayback);
+    } else {
+      beginPlayback();
+    }
+  }
+
+  function runCountIn(timeline, onDone) {
+    var totalBeats = Math.round(timeline.countInSec / timeline.secondsPerBeat);
+    if (totalBeats <= 0) { onDone(); return; }
+    var beatMs = timeline.secondsPerBeat * 1000;
+    chordViewerState.countInActive = true;
+    setPlayButtonState(true);
+    var beat = totalBeats;
+    function tick() {
+      if (!chordViewerState.countInActive) return;
+      showCountInOverlay(beat);
+      beat--;
+      if (beat <= 0) {
+        chordViewerState.countInTimer = window.setTimeout(function () {
+          if (!chordViewerState.countInActive) return;
+          chordViewerState.countInActive = false;
+          hideCountInOverlay();
+          onDone();
+        }, beatMs);
+      } else {
+        chordViewerState.countInTimer = window.setTimeout(tick, beatMs);
+      }
+    }
+    tick();
+  }
+
+  function cancelCountIn() {
+    chordViewerState.countInActive = false;
+    if (chordViewerState.countInTimer) {
+      window.clearTimeout(chordViewerState.countInTimer);
+      chordViewerState.countInTimer = null;
+    }
+    hideCountInOverlay();
+  }
+
+  function showCountInOverlay(n) {
+    var el = document.getElementById("chord-countin");
+    if (!el) return;
+    el.textContent = String(n);
+    el.classList.remove("is-visible");
+    void el.offsetWidth;
+    el.classList.add("is-visible");
+  }
+
+  function hideCountInOverlay() {
+    var el = document.getElementById("chord-countin");
+    if (el) el.classList.remove("is-visible");
   }
 
   function stopAutoScroll() {
+    cancelCountIn();
     chordViewerState.autoScrollOn = false;
     if (chordViewerState.autoScrollRaf) {
       window.cancelAnimationFrame(chordViewerState.autoScrollRaf);
@@ -680,7 +765,7 @@
   }
 
   function togglePlay() {
-    if (chordViewerState.autoScrollOn) stopAutoScroll();
+    if (chordViewerState.autoScrollOn || chordViewerState.countInActive) stopAutoScroll();
     else startAutoScroll();
   }
 
