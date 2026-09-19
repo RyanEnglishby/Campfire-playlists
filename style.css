@@ -443,6 +443,23 @@ main, header.hero, footer.closing {
 }
 .btn-primary:hover { transform: translateY(-2px) rotate(-0.5deg); box-shadow: 0 12px 34px rgba(255, 100, 40, 0.45); }
 
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  color: var(--cream-dim);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 13px 24px;
+  transition: border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+.btn-secondary:hover { border-color: var(--amber); color: var(--cream); transform: translateY(-1px); }
+
 @keyframes iconFlicker { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
 
 .scroll-cue {

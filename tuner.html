@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Tuner &mdash; Campfire Songs</title>
+<meta name="description" content="A simple chromatic guitar tuner for the campfire. Listens through your microphone and processes everything locally in your browser.">
+<meta name="color-scheme" content="dark">
+<style>html,body{background:#03050a;margin:0}</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,600&family=Caveat:wght@500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="tuner.css">
+</head>
+<body class="tuner-page">
+
+<div class="tuner-wrap">
+
+  <a class="tuner-back" href="index.html">&larr; Back to Campfire Songs</a>
+
+  <header class="tuner-head">
+    <p class="tuner-eyebrow">for when it's a little out of tune</p>
+    <h1 class="tuner-page-title">Tuner</h1>
+    <p class="tuner-sub">Standard tuning &mdash; E A D G B E &mdash; listened for right here in your browser.</p>
+  </header>
+
+  <div class="tuner-card" id="tuner-card">
+
+    <div class="tuner-controls">
+      <button type="button" class="tuner-start-btn" id="tuner-start">Start Tuner</button>
+      <button type="button" class="tuner-stop-btn" id="tuner-stop" hidden>Stop</button>
+    </div>
+
+    <p class="tuner-error" id="tuner-error" role="alert"></p>
+
+    <div class="tuner-readout" id="tuner-readout">
+      <p class="tuner-listening" id="tuner-listening" hidden>listening&hellip;</p>
+
+      <div class="tuner-note-row">
+        <span class="tuner-note-name" id="tuner-note-name">&ndash;</span><span class="tuner-note-octave" id="tuner-note-octave"></span>
+      </div>
+      <p class="tuner-freq" id="tuner-freq">&ndash;</p>
+
+      <div class="tuner-meter" id="tuner-meter">
+        <div class="tuner-meter-zones" aria-hidden="true">
+          <span class="tuner-zone tuner-zone-flat">FLAT</span>
+          <span class="tuner-zone tuner-zone-in">IN TUNE</span>
+          <span class="tuner-zone tuner-zone-sharp">SHARP</span>
+        </div>
+        <div class="tuner-meter-track">
+          <div class="tuner-meter-center" aria-hidden="true"></div>
+          <div class="tuner-needle" id="tuner-needle"></div>
+        </div>
+      </div>
+
+      <p class="tuner-cents" id="tuner-cents">&ndash;</p>
+      <p class="tuner-status" id="tuner-status" aria-live="polite"></p>
+    </div>
+  </div>
+
+  <div class="tuner-strings-panel">
+    <p class="tuner-strings-label">standard tuning reference</p>
+    <div class="tuner-strings" id="tuner-strings"></div>
+  </div>
+
+  <p class="tuner-privacy">Your microphone audio is processed on your device and is not uploaded.</p>
+
+</div>
+
+<script src="tuner.js"></script>
+</body>
+</html>
