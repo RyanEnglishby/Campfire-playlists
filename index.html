@@ -18,10 +18,26 @@
   <symbol id="icon-flame" viewBox="0 0 24 24">
     <path d="M12 2c.6 2.2-.4 3.6-1.6 5-1.4 1.6-2.9 3.3-2.9 6a4.5 4.5 0 0 0 9 0c0-1.2-.4-2-1-2.8-.2.9-.7 1.6-1.4 1.6-.9 0-1.3-.7-1.1-1.6.3-1.3 1.5-2 1.5-4 0-1.5-.8-2.6-1.5-3.4C13.4 1.9 12.6 2 12 2z"/>
   </symbol>
+  <symbol id="scribble-underline" viewBox="0 0 100 10" preserveAspectRatio="none">
+    <path d="M2,6 Q15,1 28,6 T54,4 T80,7 T98,3" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+  </symbol>
   <symbol id="icon-speaker" viewBox="0 0 24 24">
     <path d="M4 9v6h4l5 4V5L8 9H4z"/>
+    <path d="M16.3 8.6a5 5 0 0 1 0 6.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+    <path d="M18.7 6.1a8.5 8.5 0 0 1 0 11.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" opacity="0.6"/>
   </symbol>
 </svg>
+
+<div class="atmosphere-controls" role="group" aria-label="Campfire atmosphere controls">
+  <button class="atmosphere-btn" type="button" id="campfire-mode-toggle" aria-pressed="false">
+    <svg class="icon" aria-hidden="true"><use href="#icon-flame"></use></svg>
+    <span>Campfire Mode</span>
+  </button>
+  <button class="atmosphere-btn" type="button" id="sound-toggle" aria-pressed="false">
+    <svg class="icon" aria-hidden="true"><use href="#icon-speaker"></use></svg>
+    <span>Fire sound</span>
+  </button>
+</div>
 
 <div class="grain" aria-hidden="true"></div>
 <div class="stars" id="stars" aria-hidden="true"></div>
@@ -40,15 +56,11 @@
 
 <header class="hero">
   <div class="hero-content reveal" data-reveal>
-    <p class="eyebrow">a playlist for the fire</p>
+    <p class="eyebrow-stamp">a playlist for the fire</p>
     <h1 class="hero-title">Campfire<br>Songs</h1>
     <p class="hero-sub">Songs for when the fire&rsquo;s low and nobody wants to go home.</p>
     <div class="hero-actions">
       <a class="btn-primary" href="#playlist">See the Playlist</a>
-      <button class="btn-ghost" type="button" id="sound-toggle" aria-pressed="false">
-        <svg class="icon" aria-hidden="true"><use href="#icon-flame"></use></svg>
-        <span>Fire sound</span>
-      </button>
     </div>
   </div>
   <a class="scroll-cue" href="#playlist" aria-label="Scroll to the playlist">
@@ -56,54 +68,60 @@
   </a>
 </header>
 
+<div class="torn-divider" aria-hidden="true"></div>
+
 <main>
 
-  <section class="quote-break reveal" data-reveal>
+  <section class="quote-break quote-plain reveal" data-reveal>
     <p class="quote">Some songs just sound better after midnight.</p>
   </section>
 
   <section class="control-bar reveal" id="playlist" data-reveal>
     <div class="categories" id="categories" role="group" aria-label="Filter by mood">
-      <button class="pill-filter is-active" type="button" data-mood="all">All</button>
-      <button class="pill-filter" type="button" data-mood="Late Nights">Late Nights</button>
-      <button class="pill-filter" type="button" data-mood="Acoustic">Acoustic</button>
-      <button class="pill-filter" type="button" data-mood="Singalongs">Singalongs</button>
-      <button class="pill-filter" type="button" data-mood="Nostalgia">Nostalgia</button>
+      <button class="tag-filter is-active" type="button" data-mood="all">All<svg class="scribble-underline" viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true"><use href="#scribble-underline"></use></svg></button>
+      <button class="tag-filter" type="button" data-mood="Late Nights">Late Nights<svg class="scribble-underline" viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true"><use href="#scribble-underline"></use></svg></button>
+      <button class="tag-filter" type="button" data-mood="Acoustic">Acoustic<svg class="scribble-underline" viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true"><use href="#scribble-underline"></use></svg></button>
+      <button class="tag-filter" type="button" data-mood="Singalongs">Singalongs<svg class="scribble-underline" viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true"><use href="#scribble-underline"></use></svg></button>
+      <button class="tag-filter" type="button" data-mood="Nostalgia">Nostalgia<svg class="scribble-underline" viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true"><use href="#scribble-underline"></use></svg></button>
     </div>
     <div class="control-side">
-      <button class="shuffle-btn" type="button" id="shuffle-btn">
-        <svg class="icon" aria-hidden="true"><use href="#icon-flame"></use></svg>
-        <span>Shuffle the fire</span>
-      </button>
+      <button class="shuffle-stub" type="button" id="shuffle-btn"><span>shuffle the fire</span><span class="stub-icon" aria-hidden="true">&#8635;</span></button>
       <div class="progress-wrap">
-        <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+        <div class="tally" id="tally" aria-hidden="true"></div>
         <span class="progress-text" id="progress-text">0 of 20 heard</span>
       </div>
     </div>
   </section>
 
   <section class="featured reveal" data-reveal>
-    <p class="section-label">Featured tonight</p>
+    <p class="section-label">featured tonight</p>
     <div class="featured-card" id="featured-card"></div>
   </section>
 
   <section class="playlist-section">
-    <h2 class="section-title reveal" data-reveal>Around the Fire</h2>
+    <div class="section-head head-loud reveal" data-reveal>
+      <h2 class="section-title-loud">Around<br>the Fire</h2>
+      <span class="section-count">sixteen songs &mdash; no barre chords required to sing along</span>
+    </div>
     <div class="song-list" id="list-main"></div>
   </section>
 
-  <section class="quote-break reveal" data-reveal>
-    <p class="quote">Every road trip needs a soundtrack nobody skips.</p>
+  <section class="quote-break quote-paper reveal" data-reveal>
+    <p class="quote paper-note" style="--tilt:-2.2deg">Every road trip needs a soundtrack nobody skips.<span class="tape" aria-hidden="true"></span></p>
   </section>
 
+  <div class="torn-divider" aria-hidden="true"></div>
+
   <section class="playlist-section dying">
-    <h2 class="section-title reveal" data-reveal>When the Fire&rsquo;s Dying</h2>
-    <p class="section-sub reveal" data-reveal>The talk gets quieter. So do the songs.</p>
+    <div class="section-head head-quiet reveal" data-reveal>
+      <h2 class="section-title-quiet">when the fire&rsquo;s dying</h2>
+      <p class="section-sub-quiet">the talk gets quieter. so do the songs.</p>
+    </div>
     <div class="song-list" id="list-dying"></div>
   </section>
 
-  <section class="quote-break reveal" data-reveal>
-    <p class="quote">You don&rsquo;t remember the whole summer. You remember the songs.</p>
+  <section class="quote-break quote-big reveal" data-reveal>
+    <p class="quote">You don&rsquo;t remember the whole summer.<br>You remember the songs.</p>
   </section>
 
 </main>
