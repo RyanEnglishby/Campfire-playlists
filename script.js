@@ -102,9 +102,20 @@
     "Brown Eyed Girl", "Ho Hey", "I'm Yours"
   ];
 
+  /* User-confirmed progressions, keyed by song slug. Everything else
+     falls back to the empty default below. */
+  var CHORD_SECTION_OVERRIDES = {
+    "wagon-wheel": [
+      { name: "Intro", progression: ["G", "D", "Em", "C"], cue: "" },
+      { name: "Verse", progression: ["G", "D", "Em", "C"], cue: "" },
+      { name: "Chorus", progression: ["G", "D", "C", "C"], cue: "" }
+    ]
+  };
+
   function toChordEntry(song, category) {
+    var id = slugify(song.title);
     return {
-      id: slugify(song.title),
+      id: id,
       title: song.title,
       artist: song.artist,
       year: song.year,
@@ -115,7 +126,7 @@
       tuning: "Standard",
       knownChords: song.chords,
       spotify: song.spotify,
-      sections: [
+      sections: CHORD_SECTION_OVERRIDES[id] || [
         { name: "Intro", progression: [], cue: "" },
         { name: "Verse", progression: [], cue: "" },
         { name: "Chorus", progression: [], cue: "" }
