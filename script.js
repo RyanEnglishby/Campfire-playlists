@@ -117,12 +117,19 @@
   var DEFAULT_STRUM_EASY = "↓ ↓ ↓ ↓";
   var DEFAULT_BPM = 90;
 
+  // Plain string -> defaults to a full 4/4 bar (beats: 4). Pass ch(chord,
+  // beats) instead when a specific chord holds for something other than
+  // one full bar (a passing chord, a two-bar hold, a split bar, etc).
+  function ch(chord, beats) { return { chord: chord, beats: beats }; }
+
   function makeSection(name, chords, repeatCount) {
     return {
       name: name,
       repeatCount: repeatCount || 1,
       instrumental: !!INSTRUMENTAL_SECTION_NAMES[name],
-      progression: chords.map(function (c) { return { chord: c, beats: 4 }; }),
+      progression: chords.map(function (c) {
+        return typeof c === "string" ? { chord: c, beats: 4 } : c;
+      }),
       lines: []
     };
   }
@@ -140,23 +147,26 @@
     "wagon-wheel": makeSong({
       difficulty: "Easy", capo: "Capo 2",
       referenceBpm: 146, playAlongBpm: 73, timeSignature: "4/4",
+      // The chorus's final C is one held chord across two bars (8 beats),
+      // not two separate 4-beat C's.
       sections: [
         makeSection("Verse 1", ["G", "D", "Em", "C"]),
         makeSection("Verse 2", ["G", "D", "Em", "C"]),
-        makeSection("Chorus", ["G", "D", "C", "C"]),
+        makeSection("Chorus", ["G", "D", ch("C", 8)]),
         makeSection("Verse 3", ["G", "D", "Em", "C"]),
-        makeSection("Chorus", ["G", "D", "C", "C"]),
+        makeSection("Chorus", ["G", "D", ch("C", 8)]),
         makeSection("Outro", [])
       ]
     }),
     "something-in-the-orange": makeSong({
       difficulty: "Easy", capo: null,
       referenceBpm: 175, playAlongBpm: 88, timeSignature: "3/4",
+      // 3/4 time: every chord here is one complete bar = 3 beats, not 4.
       sections: [
-        makeSection("Intro", ["Em7", "D/F#", "G", "D/F#", "Em7"]),
-        makeSection("Verse", ["Em7", "D/F#", "G", "D/F#", "Em7"]),
-        makeSection("Chorus", ["Cadd9", "G", "D", "Em7"]),
-        makeSection("Outro", ["Cadd9", "G", "D", "Em7"])
+        makeSection("Intro", [ch("Em7", 3), ch("D/F#", 3), ch("G", 3), ch("D/F#", 3), ch("Em7", 3)]),
+        makeSection("Verse", [ch("Em7", 3), ch("D/F#", 3), ch("G", 3), ch("D/F#", 3), ch("Em7", 3)]),
+        makeSection("Chorus", [ch("Cadd9", 3), ch("G", 3), ch("D", 3), ch("Em7", 3)]),
+        makeSection("Outro", [ch("Cadd9", 3), ch("G", 3), ch("D", 3), ch("Em7", 3)])
       ]
     }),
     "revival": makeSong({
@@ -173,12 +183,14 @@
     "oklahoma-smokeshow": makeSong({
       difficulty: "Easy", capo: "Capo 1",
       referenceBpm: 123, playAlongBpm: 123, timeSignature: "4/4",
+      // Long chord holds: tonic/IV get a double bar (8 beats), minor/V get
+      // one bar (4 beats), by harmonic role — not a flat loop.
       sections: [
-        makeSection("Intro", ["G", "C", "Em", "D"]),
-        makeSection("Verse", ["G", "C", "Em", "D", "G"]),
-        makeSection("Chorus", ["C", "G", "D", "Em"]),
-        makeSection("Break", ["C", "G", "D", "Em"]),
-        makeSection("Outro", ["C", "G", "D", "Em"])
+        makeSection("Intro", [ch("G", 8), ch("C", 8), ch("Em", 4), ch("D", 4)]),
+        makeSection("Verse", [ch("G", 8), ch("C", 8), ch("Em", 4), ch("D", 4), ch("G", 8)]),
+        makeSection("Chorus", [ch("C", 8), ch("G", 8), ch("D", 4), ch("Em", 4)]),
+        makeSection("Break", [ch("C", 8), ch("G", 8), ch("D", 4), ch("Em", 4)]),
+        makeSection("Outro", [ch("C", 8), ch("G", 8), ch("D", 4), ch("Em", 4)])
       ]
     }),
     "east-side-of-sorrow": makeSong({
@@ -214,10 +226,12 @@
     "brown-eyed-girl": makeSong({
       difficulty: "Easy", capo: null,
       referenceBpm: 151, playAlongBpm: 76, timeSignature: "4/4",
+      // Pre-Chorus's C-D-G turnaround (both times it occurs) is a quick
+      // C/D split within the bar before G lands on the full bar.
       sections: [
         makeSection("Intro", ["G", "C", "G", "D"]),
         makeSection("Verse", ["G", "C", "G", "D"]),
-        makeSection("Pre-Chorus", ["C", "D", "G", "Em", "C", "D", "G", "D7"]),
+        makeSection("Pre-Chorus", [ch("C", 2), ch("D", 2), ch("G", 4), "Em", ch("C", 2), ch("D", 2), ch("G", 4), "D7"]),
         makeSection("Chorus", ["G", "D", "C", "G", "Em", "C", "D"]),
         makeSection("Outro", ["G", "C", "G", "D"])
       ]
@@ -281,9 +295,12 @@
     "ho-hey": makeSong({
       difficulty: "Easy", capo: null,
       referenceBpm: 80, playAlongBpm: 80, timeSignature: "4/4",
+      // The C/F alternation is not an even split: C holds for 3 beats, F
+      // gets a quick 1 beat, repeated. Order kept as originally given
+      // (C then F) — see commit notes on which chord leads the bar.
       sections: [
-        makeSection("Intro", ["C", "F"]),
-        makeSection("Verse", ["C", "F", "C", "F", "Am", "G", "C"]),
+        makeSection("Intro", [ch("C", 3), ch("F", 1)]),
+        makeSection("Verse", [ch("C", 3), ch("F", 1), ch("C", 3), ch("F", 1), "Am", "G", "C"]),
         makeSection("Chorus", ["Am", "G", "C"]),
         makeSection("Bridge", ["F", "G"]),
         makeSection("Outro", ["Am", "G", "C"])
@@ -303,8 +320,9 @@
     "the-boxer": makeSong({
       difficulty: "Medium", capo: null,
       referenceBpm: 93, playAlongBpm: 93, timeSignature: "4/4",
+      // Opening tonic is held across two bars before the progression moves.
       sections: [
-        makeSection("Verse", ["C", "F", "C", "G", "C", "F", "G", "C"]),
+        makeSection("Verse", [ch("C", 8), "F", "C", "G", "C", "F", "G", "C"]),
         makeSection("Chorus", ["Am", "G", "C"]),
         makeSection("Outro", ["C", "F", "G", "C"])
       ]
@@ -312,19 +330,22 @@
     "angel-from-montgomery": makeSong({
       difficulty: "Easy", capo: "Capo 2",
       referenceBpm: 132, playAlongBpm: 66, timeSignature: "4/4",
+      // Chorus's closing C-D-G turnaround lands on a G held for two bars.
       sections: [
         makeSection("Intro", ["G", "C", "G", "C"]),
         makeSection("Verse", ["G", "C", "G", "C", "G", "C", "D", "D7", "G"]),
-        makeSection("Chorus", ["G", "C", "G", "G", "C", "D", "G"]),
+        makeSection("Chorus", ["G", "C", "G", "G", "C", "D", ch("G", 8)]),
         makeSection("Outro", ["G", "C", "G"])
       ]
     }),
     "society": makeSong({
       difficulty: "Medium", capo: null,
       referenceBpm: 162, playAlongBpm: 81, timeSignature: "4/4",
+      // Bm held an extra bar at the end of a phrase (Intro/Verse); the
+      // Bridge's leading Bm is a different structural spot, left at 4.
       sections: [
-        makeSection("Intro", ["G", "Bm"]),
-        makeSection("Verse", ["D", "A", "D", "G", "A", "Bm"]),
+        makeSection("Intro", ["G", ch("Bm", 8)]),
+        makeSection("Verse", ["D", "A", "D", "G", "A", ch("Bm", 8)]),
         makeSection("Chorus", ["G", "D", "A", "G"]),
         makeSection("Bridge", ["Bm", "F#m", "G", "D", "A"]),
         makeSection("Outro", ["G", "D", "A", "G"])
@@ -333,11 +354,12 @@
     "no-hard-feelings": makeSong({
       difficulty: "Medium", capo: "Capo 5",
       referenceBpm: 142, playAlongBpm: 71, timeSignature: "3/4",
+      // 3/4 time: a complete bar is 3 beats, not 4.
       sections: [
-        makeSection("Intro", ["C", "Em", "Am", "F", "Em", "F", "G"]),
-        makeSection("Verse", ["C", "Em", "Am", "F", "Em", "F", "G"]),
-        makeSection("Chorus", ["F", "G", "F", "G", "Am", "Em", "F"]),
-        makeSection("Outro", ["C", "Em", "Am", "F", "G", "C"])
+        makeSection("Intro", [ch("C", 3), ch("Em", 3), ch("Am", 3), ch("F", 3), ch("Em", 3), ch("F", 3), ch("G", 3)]),
+        makeSection("Verse", [ch("C", 3), ch("Em", 3), ch("Am", 3), ch("F", 3), ch("Em", 3), ch("F", 3), ch("G", 3)]),
+        makeSection("Chorus", [ch("F", 3), ch("G", 3), ch("F", 3), ch("G", 3), ch("Am", 3), ch("Em", 3), ch("F", 3)]),
+        makeSection("Outro", [ch("C", 3), ch("Em", 3), ch("Am", 3), ch("F", 3), ch("G", 3), ch("C", 3)])
       ]
     })
   };
