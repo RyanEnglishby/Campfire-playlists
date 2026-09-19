@@ -356,7 +356,7 @@
           io.unobserve(entry.target);
         }
       });
-    }, { threshold: 0.15, rootMargin: "0px 0px -40px 0px" });
+    }, { threshold: 0.01, rootMargin: "200px 0px -10px 0px" });
     els.forEach(function (el) { io.observe(el); });
   }
 
@@ -365,9 +365,11 @@
     var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (!embersEl || reduceMotion) return;
     var count = window.innerWidth < 640 ? 7 : 16;
-    for (var i = 0; i < count; i++) {
+    var extraCount = window.innerWidth < 640 ? 5 : 10;
+
+    function makeEmber(extra) {
       var span = document.createElement("span");
-      span.className = "ember";
+      span.className = extra ? "ember ember-extra" : "ember";
       var xPct = 42 + Math.random() * 16;
       var size = 2.5 + Math.random() * 3;
       var dur = 4 + Math.random() * 4;
@@ -380,6 +382,9 @@
       span.style.setProperty("--drift", drift);
       embersEl.appendChild(span);
     }
+
+    for (var i = 0; i < count; i++) makeEmber(false);
+    for (var j = 0; j < extraCount; j++) makeEmber(true);
   }
 
   function initStarParallax() {
@@ -404,6 +409,31 @@
       });
     }, { threshold: 0.2 });
     io.observe(footer);
+  }
+
+  /* ---------- campfire mode (visual atmosphere; never touches audio state) ---------- */
+  var CAMPFIRE_MODE_KEY = "campfire-mode-enabled";
+
+  function loadCampfireMode() {
+    try { return localStorage.getItem(CAMPFIRE_MODE_KEY) === "1"; } catch (e) { return false; }
+  }
+  function saveCampfireMode(on) {
+    try { localStorage.setItem(CAMPFIRE_MODE_KEY, on ? "1" : "0"); } catch (e) {}
+  }
+
+  function setCampfireMode(on, btn) {
+    document.body.classList.toggle("campfire-mode", on);
+    if (btn) btn.setAttribute("aria-pressed", on ? "true" : "false");
+    saveCampfireMode(on);
+  }
+
+  function initCampfireMode() {
+    var btn = document.getElementById("campfire-mode-toggle");
+    if (!btn) return;
+    setCampfireMode(loadCampfireMode(), btn);
+    btn.addEventListener("click", function () {
+      setCampfireMode(!document.body.classList.contains("campfire-mode"), btn);
+    });
   }
 
   /* ---------- campfire crackle audio (synthesised, no audio file needed) ---------- */
@@ -522,6 +552,7 @@
     initEmbers();
     initStarParallax();
     initEmbersLowOnFooter();
+    initCampfireMode();
     initSoundToggle();
   });
 })();

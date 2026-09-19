@@ -21,7 +21,23 @@
   <symbol id="scribble-underline" viewBox="0 0 100 10" preserveAspectRatio="none">
     <path d="M2,6 Q15,1 28,6 T54,4 T80,7 T98,3" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
   </symbol>
+  <symbol id="icon-speaker" viewBox="0 0 24 24">
+    <path d="M4 9v6h4l5 4V5L8 9H4z"/>
+    <path d="M16.3 8.6a5 5 0 0 1 0 6.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+    <path d="M18.7 6.1a8.5 8.5 0 0 1 0 11.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" opacity="0.6"/>
+  </symbol>
 </svg>
+
+<div class="atmosphere-controls" role="group" aria-label="Campfire atmosphere controls">
+  <button class="atmosphere-btn" type="button" id="campfire-mode-toggle" aria-pressed="false">
+    <svg class="icon" aria-hidden="true"><use href="#icon-flame"></use></svg>
+    <span>Campfire Mode</span>
+  </button>
+  <button class="atmosphere-btn" type="button" id="sound-toggle" aria-pressed="false">
+    <svg class="icon" aria-hidden="true"><use href="#icon-speaker"></use></svg>
+    <span>Fire sound</span>
+  </button>
+</div>
 
 <div class="grain" aria-hidden="true"></div>
 <div class="stars" id="stars" aria-hidden="true"></div>
@@ -45,10 +61,6 @@
     <p class="hero-sub">Songs for when the fire&rsquo;s low and nobody wants to go home.</p>
     <div class="hero-actions">
       <a class="btn-primary" href="#playlist">See the Playlist</a>
-      <button class="btn-ghost" type="button" id="sound-toggle" aria-pressed="false">
-        <svg class="icon" aria-hidden="true"><use href="#icon-flame"></use></svg>
-        <span>Fire sound</span>
-      </button>
     </div>
   </div>
   <a class="scroll-cue" href="#playlist" aria-label="Scroll to the playlist">
