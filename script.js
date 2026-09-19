@@ -133,9 +133,12 @@
     "wagon-wheel": makeSong({
       difficulty: "Easy", capo: "Capo 2",
       sections: [
-        makeSection("Intro", ["G", "D", "Em", "C"]),
-        makeSection("Verse", ["G", "D", "Em", "C"]),
-        makeSection("Chorus", ["G", "D", "C", "C"])
+        makeSection("Verse 1", ["G", "D", "Em", "C"]),
+        makeSection("Verse 2", ["G", "D", "Em", "C"]),
+        makeSection("Chorus", ["G", "D", "C", "C"]),
+        makeSection("Verse 3", ["G", "D", "Em", "C"]),
+        makeSection("Chorus", ["G", "D", "C", "C"]),
+        makeSection("Outro", [])
       ]
     }),
     "something-in-the-orange": makeSong({
@@ -350,7 +353,8 @@
     autoScrollOn: false,
     autoScrollRaf: null,
     lastFrameTime: null,
-    lastFocused: null
+    lastFocused: null,
+    highlightUnits: null
   };
 
   function chordViewerEls() {
@@ -364,7 +368,8 @@
       strumRow: document.getElementById("chord-strum-row"),
       sections: document.getElementById("chord-sections"),
       playBtn: document.getElementById("chord-play-toggle"),
-      playLabel: document.getElementById("chord-play-label")
+      playLabel: document.getElementById("chord-play-label"),
+      speedDisplay: document.getElementById("chord-speed-display")
     };
   }
 
@@ -440,6 +445,7 @@
     renderStrumItem(els.strumRow, "Easy", entry.easyStrummingPattern);
 
     els.sections.innerHTML = "";
+    var highlightUnits = [];
     entry.sections.forEach(function (section) {
       var block = document.createElement("div");
       block.className = "chord-section";
@@ -459,34 +465,59 @@
 
       if (lyricLines.length) {
         lyricLines.forEach(function (line) {
-          block.appendChild(renderLyricLine(line));
+          var lineEl = renderLyricLine(line);
+          block.appendChild(lineEl);
+          highlightUnits.push({ el: lineEl, heading: name });
         });
       } else {
-        var row = document.createElement("div");
-        row.className = "chord-progression-row";
-        section.progression.forEach(function (item) {
-          var slot = document.createElement("div");
-          slot.className = "chord-prog-item";
-          var chordEl = document.createElement("span");
-          chordEl.className = "chord-prog-chord";
-          chordEl.textContent = item.chord;
-          var strumEl = document.createElement("span");
-          strumEl.className = "chord-prog-strum";
-          strumEl.textContent = entry.strummingPattern;
-          slot.appendChild(chordEl);
-          slot.appendChild(strumEl);
-          row.appendChild(slot);
-        });
-        block.appendChild(row);
-        if (!section.instrumental) {
+        if (section.progression.length) {
+          var row = document.createElement("div");
+          row.className = "chord-progression-row";
+          section.progression.forEach(function (item) {
+            var slot = document.createElement("div");
+            slot.className = "chord-prog-item";
+            var chordEl = document.createElement("span");
+            chordEl.className = "chord-prog-chord";
+            chordEl.textContent = item.chord;
+            var strumEl = document.createElement("span");
+            strumEl.className = "chord-prog-strum";
+            strumEl.textContent = entry.strummingPattern;
+            slot.appendChild(chordEl);
+            slot.appendChild(strumEl);
+            row.appendChild(slot);
+          });
+          block.appendChild(row);
+          highlightUnits.push({ el: row, heading: name });
+        }
+        if (!section.instrumental || !section.progression.length) {
           var pending = document.createElement("p");
           pending.className = "chord-pending";
-          pending.textContent = "Lyrics not added yet — chords shown above to play by ear.";
+          pending.textContent = section.progression.length
+            ? "Lyrics not added yet — chords shown above to play by ear."
+            : "Nothing added for this section yet.";
           block.appendChild(pending);
         }
       }
 
       els.sections.appendChild(block);
+    });
+    chordViewerState.highlightUnits = highlightUnits;
+    updateActiveHighlight();
+  }
+
+  function updateActiveHighlight() {
+    var els = chordViewerEls();
+    var units = chordViewerState.highlightUnits;
+    if (!els.body || !units || !units.length) return;
+    var bodyRect = els.body.getBoundingClientRect();
+    var playheadY = bodyRect.top + bodyRect.height * 0.32;
+    var activeUnit = units[0];
+    units.forEach(function (unit) {
+      if (unit.el.getBoundingClientRect().top <= playheadY) activeUnit = unit;
+    });
+    units.forEach(function (unit) {
+      unit.el.classList.toggle("chord-row-active", unit === activeUnit);
+      if (unit.heading) unit.heading.classList.toggle("chord-section-active", unit.heading === activeUnit.heading);
     });
   }
 
@@ -497,12 +528,23 @@
     els.playLabel.innerHTML = isPlaying ? "&#10074;&#10074; Pause" : "&#9654; Play";
   }
 
+  function updateSpeedDisplay() {
+    var els = chordViewerEls();
+    if (!els.speedDisplay) return;
+    // toFixed(1) alone mis-rounds values like 0.85 (binary floating point
+    // stores it as very slightly under 0.85, e.g. 0.84999...), so nudge by
+    // a tiny epsilon first to get consistent "round half up" display.
+    var rounded = Math.round((chordViewerState.speedMultiplier + 1e-9) * 10) / 10;
+    els.speedDisplay.textContent = rounded.toFixed(1) + "x";
+  }
+
   function openChordViewer(id) {
     var els = chordViewerEls();
     if (!els.root) return;
     stopAutoScroll();
     chordViewerState.currentId = id;
     chordViewerState.speedMultiplier = 1;
+    updateSpeedDisplay();
     chordViewerState.lastFocused = document.activeElement;
 
     renderChordSheet();
@@ -554,6 +596,7 @@
         var basePxPerSec = distance / (entry.scrollDuration || 150);
         chordViewerState.scrollPosition += basePxPerSec * chordViewerState.speedMultiplier * deltaSec;
         els.body.scrollTop = chordViewerState.scrollPosition;
+        updateActiveHighlight();
         if (chordViewerState.scrollPosition + els.body.clientHeight >= els.body.scrollHeight - 1) {
           stopAutoScroll();
           return;
@@ -579,8 +622,10 @@
     else startAutoScroll();
   }
 
-  function changeSpeed(factor) {
-    chordViewerState.speedMultiplier = Math.round(Math.min(2.5, Math.max(0.4, chordViewerState.speedMultiplier * factor)) * 100) / 100;
+  function changeSpeed(delta) {
+    var next = Math.round(Math.min(2.0, Math.max(0.4, chordViewerState.speedMultiplier + delta)) * 100) / 100;
+    chordViewerState.speedMultiplier = next;
+    updateSpeedDisplay();
   }
 
   function makeViewChordsButton(song) {
@@ -629,9 +674,22 @@
     var playBtn = document.getElementById("chord-play-toggle");
     if (playBtn) playBtn.addEventListener("click", togglePlay);
     var speedDown = document.getElementById("chord-speed-down");
-    if (speedDown) speedDown.addEventListener("click", function () { changeSpeed(1 / 1.15); });
+    if (speedDown) speedDown.addEventListener("click", function () { changeSpeed(-0.15); });
     var speedUp = document.getElementById("chord-speed-up");
-    if (speedUp) speedUp.addEventListener("click", function () { changeSpeed(1.15); });
+    if (speedUp) speedUp.addEventListener("click", function () { changeSpeed(0.15); });
+
+    var scrollBody = document.getElementById("chord-sheet-body");
+    if (scrollBody) {
+      var highlightTicking = false;
+      scrollBody.addEventListener("scroll", function () {
+        if (highlightTicking) return;
+        highlightTicking = true;
+        window.requestAnimationFrame(function () {
+          updateActiveHighlight();
+          highlightTicking = false;
+        });
+      }, { passive: true });
+    }
 
     initChordEmbers();
   }
