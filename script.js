@@ -320,10 +320,35 @@
     });
   }
 
+  function sparkBurst() {
+    var embersEl = document.getElementById("embers");
+    var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!embersEl || reduceMotion) return;
+    for (var i = 0; i < 7; i++) {
+      var span = document.createElement("span");
+      span.className = "ember";
+      var xPct = 36 + Math.random() * 28;
+      var size = 3 + Math.random() * 2.5;
+      var dur = 1 + Math.random() * 0.7;
+      var drift = (Math.random() * 100 - 50).toFixed(0) + "px";
+      span.style.setProperty("--x", xPct + "%");
+      span.style.setProperty("--size", size.toFixed(1) + "px");
+      span.style.setProperty("--dur", dur.toFixed(2) + "s");
+      span.style.setProperty("--delay", (Math.random() * 0.3).toFixed(2) + "s");
+      span.style.setProperty("--drift", drift);
+      embersEl.appendChild(span);
+      window.setTimeout(function (el) {
+        return function () { el.remove(); };
+      }(span), dur * 1000 * 1.7 + 200);
+    }
+  }
+
   function initShuffle() {
     var btn = document.getElementById("shuffle-btn");
     if (!btn) return;
     btn.addEventListener("click", function () {
+      sparkBurst();
+
       var pills = document.querySelectorAll(".tag-filter");
       pills.forEach(function (p) { p.classList.remove("is-active"); });
       var allPill = document.querySelector('.tag-filter[data-mood="all"]');
@@ -385,6 +410,59 @@
 
     for (var i = 0; i < count; i++) makeEmber(false);
     for (var j = 0; j < extraCount; j++) makeEmber(true);
+  }
+
+  function initSmoke() {
+    var el = document.getElementById("smoke");
+    var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!el || reduceMotion || window.innerWidth < 640) return;
+    for (var i = 0; i < 3; i++) {
+      var span = document.createElement("span");
+      var size = 70 + Math.random() * 60;
+      var dur = 10 + Math.random() * 8;
+      var delay = i * 3.2 + Math.random() * 2;
+      var dx = (Math.random() * 70 - 35).toFixed(0) + "px";
+      span.style.setProperty("--sw", size.toFixed(0) + "px");
+      span.style.setProperty("--sdur", dur.toFixed(1) + "s");
+      span.style.setProperty("--sdelay", delay.toFixed(1) + "s");
+      span.style.setProperty("--sx", dx);
+      el.appendChild(span);
+    }
+  }
+
+  function initDust() {
+    var el = document.getElementById("dust");
+    var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!el || reduceMotion) return;
+    var count = window.innerWidth < 640 ? 6 : 14;
+    for (var i = 0; i < count; i++) {
+      var span = document.createElement("span");
+      span.className = "mote";
+      var size = 1.5 + Math.random() * 2;
+      var dur = 20 + Math.random() * 18;
+      var delay = Math.random() * 20;
+      var dx = (Math.random() * 50 - 25).toFixed(0) + "px";
+      var dy = (-30 - Math.random() * 50).toFixed(0) + "px";
+      span.style.setProperty("--mx", (Math.random() * 100).toFixed(1) + "%");
+      span.style.setProperty("--my", (Math.random() * 100).toFixed(1) + "%");
+      span.style.setProperty("--msize", size.toFixed(1) + "px");
+      span.style.setProperty("--mdur", dur.toFixed(1) + "s");
+      span.style.setProperty("--mdelay", delay.toFixed(1) + "s");
+      span.style.setProperty("--mdx", dx);
+      span.style.setProperty("--mdy", dy);
+      el.appendChild(span);
+    }
+  }
+
+  function initNearGlow() {
+    var targets = document.querySelectorAll(".featured, .playlist-section.dying");
+    if (!targets.length || !("IntersectionObserver" in window)) return;
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        entry.target.classList.toggle("near-glow", entry.isIntersecting);
+      });
+    }, { threshold: 0.25 });
+    targets.forEach(function (t) { io.observe(t); });
   }
 
   function initStarParallax() {
@@ -550,8 +628,11 @@
     initShuffle();
     initReveal();
     initEmbers();
+    initSmoke();
+    initDust();
     initStarParallax();
     initEmbersLowOnFooter();
+    initNearGlow();
     initCampfireMode();
     initSoundToggle();
   });
