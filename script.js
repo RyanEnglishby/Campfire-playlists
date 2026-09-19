@@ -103,14 +103,15 @@
      next to its chords — never invented or fetched. `beats` assumes
      plain 4/4 time, not a claim about the original recording.
 
-     Playback timing is driven by real musical time (bpm/timeSignature/
-     countInBars), not by scroll position or an estimated duration.
-     DEFAULT_BPM is a plain placeholder tempo for songs that haven't
-     been tuned yet — "something-in-the-orange" is the one song with a
-     deliberately-chosen bpm right now (a reasonable slow-ballad
-     starting point, not a claim about the actual recording's tempo);
-     every other song still uses the shared default until each is
-     tuned by ear the same way. */
+     Playback timing is driven by real musical time, not by scroll
+     position or an estimated duration. Each song carries two tempos:
+     referenceBpm (the measured tempo of the actual recording — stored
+     for reference only, never used for playback) and playAlongBpm
+     (the pulse the highlighting/scroll/count-in engine actually runs
+     on, which is deliberately slower than referenceBpm for songs that
+     are more comfortable practiced at half-time). The engine must
+     only ever read playAlongBpm. DEFAULT_BPM is a defensive fallback
+     for a missing value, not a value any song is meant to use. */
   var INSTRUMENTAL_SECTION_NAMES = { "Intro": true, "Outro": true, "Break": true, "Interlude": true };
   var DEFAULT_STRUM = "↓ ↓↑ ↑↓↑";
   var DEFAULT_STRUM_EASY = "↓ ↓ ↓ ↓";
@@ -127,7 +128,6 @@
   }
 
   function makeSong(fields) {
-    fields.bpm = fields.bpm || DEFAULT_BPM;
     fields.timeSignature = fields.timeSignature || "4/4";
     fields.countInBars = fields.countInBars != null ? fields.countInBars : 1;
     fields.strummingPattern = fields.strummingPattern || DEFAULT_STRUM;
@@ -139,6 +139,7 @@
   var CHORD_SONGS = {
     "wagon-wheel": makeSong({
       difficulty: "Easy", capo: "Capo 2",
+      referenceBpm: 146, playAlongBpm: 73, timeSignature: "4/4",
       sections: [
         makeSection("Verse 1", ["G", "D", "Em", "C"]),
         makeSection("Verse 2", ["G", "D", "Em", "C"]),
@@ -149,9 +150,8 @@
       ]
     }),
     "something-in-the-orange": makeSong({
-      // Tuning test song: a slow acoustic-ballad tempo as a starting point,
-      // not a verified tempo for the actual recording — adjust by ear.
-      difficulty: "Easy", capo: null, bpm: 78, timeSignature: "4/4", countInBars: 1,
+      difficulty: "Easy", capo: null,
+      referenceBpm: 175, playAlongBpm: 88, timeSignature: "3/4",
       sections: [
         makeSection("Intro", ["Em7", "D/F#", "G", "D/F#", "Em7"]),
         makeSection("Verse", ["Em7", "D/F#", "G", "D/F#", "Em7"]),
@@ -161,6 +161,7 @@
     }),
     "revival": makeSong({
       difficulty: "Easy", capo: null,
+      referenceBpm: 158, playAlongBpm: 79, timeSignature: "4/4",
       sections: [
         makeSection("Intro", ["Em", "G", "C", "G"]),
         makeSection("Verse", ["Em", "G", "C", "G"]),
@@ -171,6 +172,7 @@
     }),
     "oklahoma-smokeshow": makeSong({
       difficulty: "Easy", capo: "Capo 1",
+      referenceBpm: 123, playAlongBpm: 123, timeSignature: "4/4",
       sections: [
         makeSection("Intro", ["G", "C", "Em", "D"]),
         makeSection("Verse", ["G", "C", "Em", "D", "G"]),
@@ -181,6 +183,7 @@
     }),
     "east-side-of-sorrow": makeSong({
       difficulty: "Easy", capo: "Capo 2",
+      referenceBpm: 144, playAlongBpm: 72, timeSignature: "4/4",
       sections: [
         makeSection("Verse", ["G", "C", "G", "D", "G", "C", "G", "D", "G", "C", "D"]),
         makeSection("Chorus", ["C", "G", "D", "G", "C", "G", "D", "G", "C", "D", "G"]),
@@ -190,6 +193,7 @@
     }),
     "wonderwall": makeSong({
       difficulty: "Easy / Medium", capo: "Capo 2",
+      referenceBpm: 175, playAlongBpm: 88, timeSignature: "4/4",
       sections: [
         makeSection("Verse", ["Em7", "G", "Dsus4", "A7sus4"]),
         makeSection("Pre-Chorus", ["Cadd9", "Dsus4", "Em7"]),
@@ -198,6 +202,7 @@
     }),
     "take-me-home-country-roads": makeSong({
       difficulty: "Easy", capo: "Capo 2",
+      referenceBpm: 82, playAlongBpm: 82, timeSignature: "4/4",
       sections: [
         makeSection("Intro", ["G"]),
         makeSection("Verse", ["G", "Em", "D", "C", "G"]),
@@ -208,6 +213,7 @@
     }),
     "brown-eyed-girl": makeSong({
       difficulty: "Easy", capo: null,
+      referenceBpm: 151, playAlongBpm: 76, timeSignature: "4/4",
       sections: [
         makeSection("Intro", ["G", "C", "G", "D"]),
         makeSection("Verse", ["G", "C", "G", "D"]),
@@ -218,6 +224,7 @@
     }),
     "ripple": makeSong({
       difficulty: "Easy / Medium", capo: null,
+      referenceBpm: 126, playAlongBpm: 126, timeSignature: "4/4",
       sections: [
         makeSection("Verse", ["G", "C", "G", "C", "G", "D"]),
         makeSection("Chorus", ["C", "G", "Am", "C", "G", "D", "C", "G"]),
@@ -226,6 +233,7 @@
     }),
     "heading-south": makeSong({
       difficulty: "Easy", capo: "Capo 4",
+      referenceBpm: 110, playAlongBpm: 110, timeSignature: "4/4",
       sections: [
         makeSection("Intro", ["C", "G", "Am", "F"]),
         makeSection("Verse", ["Am", "F", "C", "G"]),
@@ -235,6 +243,7 @@
     }),
     "i-remember-everything": makeSong({
       difficulty: "Easy", capo: null,
+      referenceBpm: 78, playAlongBpm: 78, timeSignature: "4/4",
       sections: [
         makeSection("Intro", ["Am", "C", "G", "Am", "C", "G"]),
         makeSection("Verse", ["Am", "C", "G"]),
@@ -243,6 +252,7 @@
     }),
     "from-austin": makeSong({
       difficulty: "Medium", capo: null,
+      referenceBpm: 110, playAlongBpm: 110, timeSignature: "4/4",
       sections: [
         makeSection("Verse", ["G", "C", "Em", "D"]),
         makeSection("Chorus", ["C", "G", "D", "Em"]),
@@ -251,6 +261,7 @@
     }),
     "sun-to-me": makeSong({
       difficulty: "Easy", capo: null,
+      referenceBpm: 88, playAlongBpm: 88, timeSignature: "4/4",
       sections: [
         makeSection("Intro", ["Am", "G", "C", "F"]),
         makeSection("Verse", ["Am", "G", "C", "F"]),
@@ -260,6 +271,7 @@
     }),
     "condemned": makeSong({
       difficulty: "Medium", capo: "Capo 1",
+      referenceBpm: 126, playAlongBpm: 63, timeSignature: "4/4",
       sections: [
         makeSection("Verse", ["Am", "E", "Bm", "C#m"]),
         makeSection("Pre-Chorus", ["Am", "E", "Bm", "C#m"]),
@@ -268,6 +280,7 @@
     }),
     "ho-hey": makeSong({
       difficulty: "Easy", capo: null,
+      referenceBpm: 80, playAlongBpm: 80, timeSignature: "4/4",
       sections: [
         makeSection("Intro", ["C", "F"]),
         makeSection("Verse", ["C", "F", "C", "F", "Am", "G", "C"]),
@@ -278,6 +291,7 @@
     }),
     "i-m-yours": makeSong({
       difficulty: "Easy", capo: "Capo 4",
+      referenceBpm: 151, playAlongBpm: 76, timeSignature: "4/4",
       sections: [
         makeSection("Intro", ["G", "D", "Em", "C"]),
         makeSection("Verse", ["G", "D", "Em", "C"]),
@@ -288,6 +302,7 @@
     }),
     "the-boxer": makeSong({
       difficulty: "Medium", capo: null,
+      referenceBpm: 93, playAlongBpm: 93, timeSignature: "4/4",
       sections: [
         makeSection("Verse", ["C", "F", "C", "G", "C", "F", "G", "C"]),
         makeSection("Chorus", ["Am", "G", "C"]),
@@ -296,6 +311,7 @@
     }),
     "angel-from-montgomery": makeSong({
       difficulty: "Easy", capo: "Capo 2",
+      referenceBpm: 132, playAlongBpm: 66, timeSignature: "4/4",
       sections: [
         makeSection("Intro", ["G", "C", "G", "C"]),
         makeSection("Verse", ["G", "C", "G", "C", "G", "C", "D", "D7", "G"]),
@@ -305,6 +321,7 @@
     }),
     "society": makeSong({
       difficulty: "Medium", capo: null,
+      referenceBpm: 162, playAlongBpm: 81, timeSignature: "4/4",
       sections: [
         makeSection("Intro", ["G", "Bm"]),
         makeSection("Verse", ["D", "A", "D", "G", "A", "Bm"]),
@@ -315,6 +332,7 @@
     }),
     "no-hard-feelings": makeSong({
       difficulty: "Medium", capo: "Capo 5",
+      referenceBpm: 142, playAlongBpm: 71, timeSignature: "3/4",
       sections: [
         makeSection("Intro", ["C", "Em", "Am", "F", "Em", "F", "G"]),
         makeSection("Verse", ["C", "Em", "Am", "F", "Em", "F", "G"]),
@@ -339,7 +357,8 @@
       tuning: data.tuning,
       strummingPattern: data.strummingPattern,
       easyStrummingPattern: data.easyStrummingPattern,
-      bpm: data.bpm,
+      referenceBpm: data.referenceBpm,
+      playAlongBpm: data.playAlongBpm,
       timeSignature: data.timeSignature,
       countInBars: data.countInBars,
       sections: data.sections
@@ -546,13 +565,15 @@
   }
 
   // Flattens sections (respecting repeatCount and each chord's real
-  // duration in seconds, from bpm + beats) into an ordered list of
+  // duration in seconds, from playAlongBpm + beats) into an ordered list of
   // {el, heading, startSec, endSec} spanning the whole song. Repeats reuse
   // the same DOM elements — a 4-chord progression played ×4 cycles through
   // the same 4 elements four times, it doesn't clone them. This is genuine
-  // musical time: scroll position plays no part in computing it.
+  // musical time: scroll position plays no part in computing it. Only
+  // playAlongBpm ever drives this — referenceBpm is informational only and
+  // must never reach this function's math.
   function buildPlaybackTimeline(entry, sectionBuilds) {
-    var secondsPerBeat = 60 / (entry.bpm || DEFAULT_BPM);
+    var secondsPerBeat = 60 / (entry.playAlongBpm || DEFAULT_BPM);
     var beatsPerBar = parseBeatsPerBar(entry.timeSignature);
     var timeline = [];
     sectionBuilds.forEach(function (item) {
