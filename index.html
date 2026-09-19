@@ -150,41 +150,20 @@
       <button type="button" class="chord-close" id="chord-close" aria-label="Close chord viewer">&times;</button>
     </div>
 
-    <div class="chord-controls">
-      <div class="chord-controls-row">
-        <button type="button" class="chord-ctrl" id="chord-prev">&larr; prev</button>
-        <button type="button" class="chord-ctrl chord-ctrl-pass" id="chord-pass-guitar">pass the guitar</button>
-        <button type="button" class="chord-ctrl" id="chord-next">next &rarr;</button>
-      </div>
-      <div class="chord-controls-row">
-        <div class="chord-ctrl-group">
-          <button type="button" class="chord-ctrl" id="chord-transpose-down" aria-label="Transpose down one semitone">&minus;</button>
-          <span class="chord-key-display" id="chord-key-display">Original key</span>
-          <button type="button" class="chord-ctrl" id="chord-transpose-up" aria-label="Transpose up one semitone">+</button>
-          <button type="button" class="chord-ctrl" id="chord-reset-key">reset</button>
-        </div>
-        <button type="button" class="chord-ctrl" id="chord-simplify-toggle" aria-pressed="false">simplify chords</button>
-      </div>
-      <div class="chord-controls-row">
-        <div class="chord-ctrl-group">
-          <button type="button" class="chord-ctrl" id="chord-autoscroll-toggle" aria-pressed="false">auto-scroll</button>
-          <button type="button" class="chord-ctrl" id="chord-speed-down" aria-label="Slower auto-scroll">&minus;</button>
-          <button type="button" class="chord-ctrl" id="chord-speed-up" aria-label="Faster auto-scroll">+</button>
-        </div>
-        <div class="chord-ctrl-group">
-          <button type="button" class="chord-ctrl" id="chord-text-down" aria-label="Smaller text">A&minus;</button>
-          <button type="button" class="chord-ctrl" id="chord-text-up" aria-label="Larger text">A+</button>
-        </div>
-      </div>
-    </div>
+    <div class="chord-strum-row" id="chord-strum-row"></div>
 
     <div class="chord-sheet-body" id="chord-sheet-body">
-      <p class="chord-pass-banner" id="chord-pass-banner">Your turn.</p>
-      <div class="chord-known-wrap">
-        <p class="chord-known-label">chords in this song</p>
-        <p class="chord-known" id="chord-known"></p>
-      </div>
       <div class="chord-sections" id="chord-sections"></div>
+    </div>
+
+    <div class="chord-playbar">
+      <button type="button" class="chord-play-btn" id="chord-play-toggle" aria-pressed="false">
+        <span id="chord-play-label">&#9654; Play</span>
+      </button>
+      <div class="chord-speed-group">
+        <button type="button" class="chord-ctrl" id="chord-speed-down">Slower</button>
+        <button type="button" class="chord-ctrl" id="chord-speed-up">Faster</button>
+      </div>
     </div>
   </div>
 </div>

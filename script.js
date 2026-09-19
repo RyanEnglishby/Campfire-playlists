@@ -93,328 +93,261 @@
     return str.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
   }
 
-  function usesBarreF(chordsStr) {
-    return chordsStr.split(",").some(function (c) { return c.trim() === "F"; });
+  /* ---------- chord + lyric data ----------
+     One play-along sheet per song: metadata, a strumming pattern, and
+     an ordered list of sections. A section is either instrumental
+     (Intro/Outro/Break/Interlude — shown as a chord-and-strum row) or
+     a lyric section (Verse/Chorus/Bridge/Pre-Chorus). No lyrics have
+     been supplied yet for any song, so every lyric section's `lines`
+     stays empty and renders an honest "lyrics not added yet" note
+     next to its chords — never invented or fetched. `beats`/`bars`
+     assume plain 4/4 time (one bar per chord), not a claim about the
+     original recording. scrollDuration is an auto-estimate from how
+     much content a song has, meant to be tuned by ear later. */
+  var INSTRUMENTAL_SECTION_NAMES = { "Intro": true, "Outro": true, "Break": true, "Interlude": true };
+  var DEFAULT_STRUM = "↓ ↓↑ ↑↓↑";
+  var DEFAULT_STRUM_EASY = "↓ ↓ ↓ ↓";
+
+  function makeSection(name, chords, repeatCount) {
+    return {
+      name: name,
+      repeatCount: repeatCount || 1,
+      instrumental: !!INSTRUMENTAL_SECTION_NAMES[name],
+      progression: chords.map(function (c) { return { chord: c, beats: 4, bars: 1 }; }),
+      lines: []
+    };
   }
 
-  var GUITAR_PRIORITY_TITLES = [
-    "Wagon Wheel", "Wonderwall", "Take Me Home, Country Roads",
-    "Brown Eyed Girl", "Ho Hey", "I'm Yours"
-  ];
+  function makeSong(fields) {
+    var slots = fields.sections.reduce(function (sum, s) {
+      return sum + s.progression.length * s.repeatCount;
+    }, 0);
+    fields.scrollDuration = fields.scrollDuration || Math.max(90, Math.min(240, Math.round(slots * 6 / 10) * 10));
+    fields.strummingPattern = fields.strummingPattern || DEFAULT_STRUM;
+    fields.easyStrummingPattern = fields.easyStrummingPattern || DEFAULT_STRUM_EASY;
+    fields.tuning = fields.tuning || "Standard";
+    return fields;
+  }
 
-  /* User-confirmed progressions and metadata, keyed by song slug.
-     Only the fields present on an entry are overridden — everything
-     else still comes from the song's original data. Any song not
-     listed here keeps the empty "not written down yet" default.
-     These are simplified campfire arrangements, not exact studio
-     transcriptions — songs marked simplifiedArrangement show a small
-     "Campfire arrangement" note in the viewer. Wagon Wheel's entry is
-     unchanged from before (sections only). */
-  var CHORD_OVERRIDES = {
-    "wagon-wheel": {
+  var CHORD_SONGS = {
+    "wagon-wheel": makeSong({
+      difficulty: "Easy", capo: "Capo 2",
       sections: [
-        { name: "Intro", progression: ["G", "D", "Em", "C"], cue: "" },
-        { name: "Verse", progression: ["G", "D", "Em", "C"], cue: "" },
-        { name: "Chorus", progression: ["G", "D", "C", "C"], cue: "" }
+        makeSection("Intro", ["G", "D", "Em", "C"]),
+        makeSection("Verse", ["G", "D", "Em", "C"]),
+        makeSection("Chorus", ["G", "D", "C", "C"])
       ]
-    },
-    "something-in-the-orange": {
-      knownChords: "Em7, D/F#, G, Cadd9",
+    }),
+    "something-in-the-orange": makeSong({
+      difficulty: "Easy", capo: null,
       sections: [
-        { name: "Intro", progression: ["Em7", "D/F#", "G", "D/F#", "Em7"], cue: "" },
-        { name: "Verse", progression: ["Em7", "D/F#", "G", "D/F#", "Em7"], cue: "" },
-        { name: "Chorus", progression: ["Cadd9", "G", "D", "Em7"], cue: "" },
-        { name: "Outro", progression: ["Cadd9", "G", "D", "Em7"], cue: "" }
+        makeSection("Intro", ["Em7", "D/F#", "G", "D/F#", "Em7"]),
+        makeSection("Verse", ["Em7", "D/F#", "G", "D/F#", "Em7"]),
+        makeSection("Chorus", ["Cadd9", "G", "D", "Em7"]),
+        makeSection("Outro", ["Cadd9", "G", "D", "Em7"])
       ]
-    },
-    "revival": {
+    }),
+    "revival": makeSong({
+      difficulty: "Easy", capo: null,
       sections: [
-        { name: "Intro", progression: ["Em", "G", "C", "G"], cue: "" },
-        { name: "Verse", progression: ["Em", "G", "C", "G"], cue: "" },
-        { name: "Chorus", progression: ["Em", "G", "C", "G"], cue: "" },
-        { name: "Interlude", progression: ["Em", "G", "C", "G"], cue: "" },
-        { name: "Outro", progression: ["Em", "G", "C", "G"], cue: "" }
+        makeSection("Intro", ["Em", "G", "C", "G"]),
+        makeSection("Verse", ["Em", "G", "C", "G"]),
+        makeSection("Chorus", ["Em", "G", "C", "G"]),
+        makeSection("Interlude", ["Em", "G", "C", "G"]),
+        makeSection("Outro", ["Em", "G", "C", "G"])
       ]
-    },
-    "oklahoma-smokeshow": {
-      capo: "Capo 1",
+    }),
+    "oklahoma-smokeshow": makeSong({
+      difficulty: "Easy", capo: "Capo 1",
       sections: [
-        { name: "Intro", progression: ["G", "C", "Em", "D"], cue: "" },
-        { name: "Verse", progression: ["G", "C", "Em", "D", "G"], cue: "" },
-        { name: "Chorus", progression: ["C", "G", "D", "Em"], cue: "" },
-        { name: "Break", progression: ["C", "G", "D", "Em"], cue: "" },
-        { name: "Outro", progression: ["C", "G", "D", "Em"], cue: "" }
+        makeSection("Intro", ["G", "C", "Em", "D"]),
+        makeSection("Verse", ["G", "C", "Em", "D", "G"]),
+        makeSection("Chorus", ["C", "G", "D", "Em"]),
+        makeSection("Break", ["C", "G", "D", "Em"]),
+        makeSection("Outro", ["C", "G", "D", "Em"])
       ]
-    },
-    "east-side-of-sorrow": {
-      capo: "Capo 2",
+    }),
+    "east-side-of-sorrow": makeSong({
+      difficulty: "Easy", capo: "Capo 2",
       sections: [
-        { name: "Verse", progression: ["G", "C", "G", "D", "G", "C", "G", "D", "G", "C", "D"], cue: "" },
-        { name: "Chorus", progression: ["C", "G", "D", "G", "C", "G", "D", "G", "C", "D", "G"], cue: "" },
-        { name: "Bridge", progression: ["C", "G", "D", "G"], cue: "" },
-        { name: "Outro", progression: ["G", "C", "G", "D", "G", "C", "D"], cue: "" }
+        makeSection("Verse", ["G", "C", "G", "D", "G", "C", "G", "D", "G", "C", "D"]),
+        makeSection("Chorus", ["C", "G", "D", "G", "C", "G", "D", "G", "C", "D", "G"]),
+        makeSection("Bridge", ["C", "G", "D", "G"]),
+        makeSection("Outro", ["G", "C", "G", "D", "G", "C", "D"])
       ]
-    },
-    "wonderwall": {
-      difficulty: "Easy / Medium",
-      knownChords: "Em7, G, Dsus4, A7sus4, Cadd9",
-      simplifiedArrangement: true,
+    }),
+    "wonderwall": makeSong({
+      difficulty: "Easy / Medium", capo: "Capo 2",
       sections: [
-        { name: "Verse", progression: ["Em7", "G", "Dsus4", "A7sus4"], cue: "" },
-        { name: "Pre-Chorus", progression: ["Cadd9", "Dsus4", "Em7"], cue: "" },
-        { name: "Chorus", progression: ["Cadd9", "Em7", "G", "Em7"], cue: "" }
+        makeSection("Verse", ["Em7", "G", "Dsus4", "A7sus4"]),
+        makeSection("Pre-Chorus", ["Cadd9", "Dsus4", "Em7"]),
+        makeSection("Chorus", ["Cadd9", "Em7", "G", "Em7"])
       ]
-    },
-    "take-me-home-country-roads": {
-      knownChords: "G, Em, D, C, F, D7",
+    }),
+    "take-me-home-country-roads": makeSong({
+      difficulty: "Easy", capo: "Capo 2",
       sections: [
-        { name: "Intro", progression: ["G"], cue: "" },
-        { name: "Verse", progression: ["G", "Em", "D", "C", "G"], cue: "" },
-        { name: "Chorus", progression: ["G", "D", "Em", "C", "G", "D", "C", "G"], cue: "" },
-        { name: "Bridge", progression: ["Em", "D/F#", "G", "C", "G", "D", "Em", "F", "C", "G", "D", "D7"], cue: "" },
-        { name: "Outro", progression: ["D", "G"], cue: "" }
+        makeSection("Intro", ["G"]),
+        makeSection("Verse", ["G", "Em", "D", "C", "G"]),
+        makeSection("Chorus", ["G", "D", "Em", "C", "G", "D", "C", "G"]),
+        makeSection("Bridge", ["Em", "D/F#", "G", "C", "G", "D", "Em", "F", "C", "G", "D", "D7"]),
+        makeSection("Outro", ["D", "G"])
       ]
-    },
-    "brown-eyed-girl": {
-      knownChords: "G, C, D, Em, D7",
+    }),
+    "brown-eyed-girl": makeSong({
+      difficulty: "Easy", capo: null,
       sections: [
-        { name: "Intro", progression: ["G", "C", "G", "D"], cue: "" },
-        { name: "Verse", progression: ["G", "C", "G", "D"], cue: "" },
-        { name: "Pre-Chorus", progression: ["C", "D", "G", "Em", "C", "D", "G", "D7"], cue: "" },
-        { name: "Chorus", progression: ["G", "D", "C", "G", "Em", "C", "D"], cue: "" },
-        { name: "Outro", progression: ["G", "C", "G", "D"], cue: "" }
+        makeSection("Intro", ["G", "C", "G", "D"]),
+        makeSection("Verse", ["G", "C", "G", "D"]),
+        makeSection("Pre-Chorus", ["C", "D", "G", "Em", "C", "D", "G", "D7"]),
+        makeSection("Chorus", ["G", "D", "C", "G", "Em", "C", "D"]),
+        makeSection("Outro", ["G", "C", "G", "D"])
       ]
-    },
-    "ripple": {
-      difficulty: "Easy / Medium",
-      knownChords: "G, C, D, Am, Em",
-      simplifiedArrangement: true,
+    }),
+    "ripple": makeSong({
+      difficulty: "Easy / Medium", capo: null,
       sections: [
-        { name: "Verse", progression: ["G", "C", "G", "C", "G", "D"], cue: "" },
-        { name: "Chorus", progression: ["C", "G", "Am", "C", "G", "D", "C", "G"], cue: "" },
-        { name: "Outro", progression: ["G", "C", "G", "D", "G"], cue: "" }
+        makeSection("Verse", ["G", "C", "G", "C", "G", "D"]),
+        makeSection("Chorus", ["C", "G", "Am", "C", "G", "D", "C", "G"]),
+        makeSection("Outro", ["G", "C", "G", "D", "G"])
       ]
-    },
-    "heading-south": {
-      capo: "Capo 4",
-      difficulty: "Easy",
-      knownChords: "Am, F, C, G",
+    }),
+    "heading-south": makeSong({
+      difficulty: "Easy", capo: "Capo 4",
       sections: [
-        { name: "Intro", progression: ["C", "G", "Am", "F"], cue: "" },
-        { name: "Verse", progression: ["Am", "F", "C", "G"], cue: "" },
-        { name: "Chorus", progression: ["Am", "F", "C", "G"], cue: "" },
-        { name: "Outro", progression: ["Am", "F", "C", "G"], cue: "" }
+        makeSection("Intro", ["C", "G", "Am", "F"]),
+        makeSection("Verse", ["Am", "F", "C", "G"]),
+        makeSection("Chorus", ["Am", "F", "C", "G"]),
+        makeSection("Outro", ["Am", "F", "C", "G"])
       ]
-    },
-    "i-remember-everything": {
-      difficulty: "Easy",
-      knownChords: "Am, C, G, F",
-      simplifiedArrangement: true,
+    }),
+    "i-remember-everything": makeSong({
+      difficulty: "Easy", capo: null,
       sections: [
-        { name: "Intro", progression: ["Am", "C", "G", "Am", "C", "G"], cue: "" },
-        { name: "Verse", progression: ["Am", "C", "G"], cue: "" },
-        { name: "Chorus", progression: ["F", "C", "G", "Am"], cue: "" }
+        makeSection("Intro", ["Am", "C", "G", "Am", "C", "G"]),
+        makeSection("Verse", ["Am", "C", "G"]),
+        makeSection("Chorus", ["F", "C", "G", "Am"])
       ]
-    },
-    "from-austin": {
-      difficulty: "Medium",
-      knownChords: "G, C, Em, D",
-      simplifiedArrangement: true,
+    }),
+    "from-austin": makeSong({
+      difficulty: "Medium", capo: null,
       sections: [
-        { name: "Verse", progression: ["G", "C", "Em", "D"], cue: "" },
-        { name: "Chorus", progression: ["C", "G", "D", "Em"], cue: "" },
-        { name: "Outro", progression: ["G", "C", "Em", "D"], cue: "" }
+        makeSection("Verse", ["G", "C", "Em", "D"]),
+        makeSection("Chorus", ["C", "G", "D", "Em"]),
+        makeSection("Outro", ["G", "C", "Em", "D"])
       ]
-    },
-    "sun-to-me": {
-      difficulty: "Easy",
-      knownChords: "Am, G, C, F",
-      simplifiedArrangement: true,
+    }),
+    "sun-to-me": makeSong({
+      difficulty: "Easy", capo: null,
       sections: [
-        { name: "Intro", progression: ["Am", "G", "C", "F"], cue: "" },
-        { name: "Verse", progression: ["Am", "G", "C", "F"], cue: "" },
-        { name: "Chorus", progression: ["F", "C", "G", "Am"], cue: "" },
-        { name: "Outro", progression: ["Am", "G", "C", "F"], cue: "" }
+        makeSection("Intro", ["Am", "G", "C", "F"]),
+        makeSection("Verse", ["Am", "G", "C", "F"]),
+        makeSection("Chorus", ["F", "C", "G", "Am"]),
+        makeSection("Outro", ["Am", "G", "C", "F"])
       ]
-    },
-    "condemned": {
-      capo: "Capo 1",
-      difficulty: "Medium",
-      knownChords: "Am, E, Bm, C#m",
-      simplifiedArrangement: true,
+    }),
+    "condemned": makeSong({
+      difficulty: "Medium", capo: "Capo 1",
       sections: [
-        { name: "Verse", progression: ["Am", "E", "Bm", "C#m"], cue: "" },
-        { name: "Pre-Chorus", progression: ["Am", "E", "Bm", "C#m"], cue: "" },
-        { name: "Chorus", progression: ["Am", "E", "Bm", "C#m"], cue: "" }
+        makeSection("Verse", ["Am", "E", "Bm", "C#m"]),
+        makeSection("Pre-Chorus", ["Am", "E", "Bm", "C#m"]),
+        makeSection("Chorus", ["Am", "E", "Bm", "C#m"])
       ]
-    },
-    "ho-hey": {
-      difficulty: "Easy",
-      knownChords: "C, F, Am, G",
+    }),
+    "ho-hey": makeSong({
+      difficulty: "Easy", capo: null,
       sections: [
-        { name: "Intro", progression: ["C", "F"], cue: "" },
-        { name: "Verse", progression: ["C", "F", "C", "F", "Am", "G", "C"], cue: "" },
-        { name: "Chorus", progression: ["Am", "G", "C"], cue: "" },
-        { name: "Bridge", progression: ["F", "G"], cue: "" },
-        { name: "Outro", progression: ["Am", "G", "C"], cue: "" }
+        makeSection("Intro", ["C", "F"]),
+        makeSection("Verse", ["C", "F", "C", "F", "Am", "G", "C"]),
+        makeSection("Chorus", ["Am", "G", "C"]),
+        makeSection("Bridge", ["F", "G"]),
+        makeSection("Outro", ["Am", "G", "C"])
       ]
-    },
-    "i-m-yours": {
-      capo: "Capo 4",
-      difficulty: "Easy",
-      knownChords: "G, D, Em, C, A7, Bm",
+    }),
+    "i-m-yours": makeSong({
+      difficulty: "Easy", capo: "Capo 4",
       sections: [
-        { name: "Intro", progression: ["G", "D", "Em", "C"], cue: "" },
-        { name: "Verse", progression: ["G", "D", "Em", "C"], cue: "" },
-        { name: "Chorus", progression: ["G", "D", "Em", "C"], cue: "" },
-        { name: "Bridge", progression: ["G", "D", "Em", "D", "C", "A7", "G", "Bm", "Em", "D", "C", "A7"], cue: "" },
-        { name: "Outro", progression: ["G", "D", "Em", "C"], cue: "" }
+        makeSection("Intro", ["G", "D", "Em", "C"]),
+        makeSection("Verse", ["G", "D", "Em", "C"]),
+        makeSection("Chorus", ["G", "D", "Em", "C"]),
+        makeSection("Bridge", ["G", "D", "Em", "D", "C", "A7", "G", "Bm", "Em", "D", "C", "A7"]),
+        makeSection("Outro", ["G", "D", "Em", "C"])
       ]
-    },
-    "the-boxer": {
-      difficulty: "Medium",
-      knownChords: "C, F, G, Am",
-      simplifiedArrangement: true,
+    }),
+    "the-boxer": makeSong({
+      difficulty: "Medium", capo: null,
       sections: [
-        { name: "Verse", progression: ["C", "F", "C", "G", "C", "F", "G", "C"], cue: "" },
-        { name: "Chorus", progression: ["Am", "G", "C"], cue: "" },
-        { name: "Outro", progression: ["C", "F", "G", "C"], cue: "" }
+        makeSection("Verse", ["C", "F", "C", "G", "C", "F", "G", "C"]),
+        makeSection("Chorus", ["Am", "G", "C"]),
+        makeSection("Outro", ["C", "F", "G", "C"])
       ]
-    },
-    "angel-from-montgomery": {
-      capo: "Capo 2",
-      difficulty: "Easy",
-      knownChords: "G, C, D, D7",
-      simplifiedArrangement: true,
+    }),
+    "angel-from-montgomery": makeSong({
+      difficulty: "Easy", capo: "Capo 2",
       sections: [
-        { name: "Intro", progression: ["G", "C", "G", "C"], cue: "" },
-        { name: "Verse", progression: ["G", "C", "G", "C", "G", "C", "D", "D7", "G"], cue: "" },
-        { name: "Chorus", progression: ["G", "C", "G", "G", "C", "D", "G"], cue: "" },
-        { name: "Outro", progression: ["G", "C", "G"], cue: "" }
+        makeSection("Intro", ["G", "C", "G", "C"]),
+        makeSection("Verse", ["G", "C", "G", "C", "G", "C", "D", "D7", "G"]),
+        makeSection("Chorus", ["G", "C", "G", "G", "C", "D", "G"]),
+        makeSection("Outro", ["G", "C", "G"])
       ]
-    },
-    "society": {
-      capo: null,
-      difficulty: "Medium",
-      knownChords: "G, D, A, Bm, F#m",
+    }),
+    "society": makeSong({
+      difficulty: "Medium", capo: null,
       sections: [
-        { name: "Intro", progression: ["G", "Bm"], cue: "" },
-        { name: "Verse", progression: ["D", "A", "D", "G", "A", "Bm"], cue: "" },
-        { name: "Chorus", progression: ["G", "D", "A", "G"], cue: "" },
-        { name: "Bridge", progression: ["Bm", "F#m", "G", "D", "A"], cue: "" },
-        { name: "Outro", progression: ["G", "D", "A", "G"], cue: "" }
+        makeSection("Intro", ["G", "Bm"]),
+        makeSection("Verse", ["D", "A", "D", "G", "A", "Bm"]),
+        makeSection("Chorus", ["G", "D", "A", "G"]),
+        makeSection("Bridge", ["Bm", "F#m", "G", "D", "A"]),
+        makeSection("Outro", ["G", "D", "A", "G"])
       ]
-    },
-    "no-hard-feelings": {
-      difficulty: "Medium",
+    }),
+    "no-hard-feelings": makeSong({
+      difficulty: "Medium", capo: "Capo 5",
       sections: [
-        { name: "Intro", progression: ["C", "Em", "Am", "F", "Em", "F", "G"], cue: "" },
-        { name: "Verse", progression: ["C", "Em", "Am", "F", "Em", "F", "G"], cue: "" },
-        { name: "Chorus", progression: ["F", "G", "F", "G", "Am", "Em", "F"], cue: "" },
-        { name: "Outro", progression: ["C", "Em", "Am", "F", "G", "C"], cue: "" }
+        makeSection("Intro", ["C", "Em", "Am", "F", "Em", "F", "G"]),
+        makeSection("Verse", ["C", "Em", "Am", "F", "Em", "F", "G"]),
+        makeSection("Chorus", ["F", "G", "F", "G", "Am", "Em", "F"]),
+        makeSection("Outro", ["C", "Em", "Am", "F", "G", "C"])
       ]
-    }
+    })
   };
 
   function toChordEntry(song, category) {
     var id = slugify(song.title);
-    var o = CHORD_OVERRIDES[id] || {};
+    var data = CHORD_SONGS[id];
+    if (!data) return null;
     return {
       id: id,
       title: song.title,
       artist: song.artist,
       year: song.year,
       category: category,
-      favorite: !!song.pick,
-      difficulty: o.difficulty || (usesBarreF(song.chords) ? "Intermediate" : "Easy"),
-      capo: "capo" in o ? o.capo : song.capo,
-      tuning: "Standard",
-      knownChords: o.knownChords || song.chords,
-      spotify: song.spotify,
-      simplifiedArrangement: !!o.simplifiedArrangement,
-      sections: o.sections || [
-        { name: "Intro", progression: [], cue: "" },
-        { name: "Verse", progression: [], cue: "" },
-        { name: "Chorus", progression: [], cue: "" }
-      ]
+      difficulty: data.difficulty,
+      capo: data.capo,
+      tuning: data.tuning,
+      strummingPattern: data.strummingPattern,
+      easyStrummingPattern: data.easyStrummingPattern,
+      scrollDuration: data.scrollDuration,
+      sections: data.sections
     };
   }
 
   var CHORD_DATA = [toChordEntry(FEATURED, "Featured Tonight")]
     .concat(MAIN.map(function (s) { return toChordEntry(s, "Around the Fire"); }))
     .concat(DYING.map(function (s) { return toChordEntry(s, "When the Fire's Dying"); }))
-    .concat([toChordEntry(FINALE, "Closing Song")]);
+    .concat([toChordEntry(FINALE, "Closing Song")])
+    .filter(Boolean);
 
   ALL_SONGS.forEach(function (song) { song.id = slugify(song.title); });
 
-  function chordIndexById(id) {
-    for (var i = 0; i < CHORD_DATA.length; i++) {
-      if (CHORD_DATA[i].id === id) return i;
-    }
-    return 0;
-  }
-
-  /* ---------- chord transposition + simplification utility ---------- */
-  var CHROMATIC = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-  var NOTE_INDEX = {
-    C: 0, "B#": 0, "C#": 1, Db: 1, D: 2, "D#": 3, Eb: 3, E: 4, Fb: 4,
-    F: 5, "E#": 5, "F#": 6, Gb: 6, G: 7, "G#": 8, Ab: 8, A: 9,
-    "A#": 10, Bb: 10, B: 11, Cb: 11
-  };
-
-  function transposeRoot(root, amount) {
-    var idx = NOTE_INDEX[root];
-    if (idx === undefined) return root;
-    var next = ((idx + amount) % 12 + 12) % 12;
-    return CHROMATIC[next];
-  }
-
-  function transposeChord(chord, amount) {
-    if (!chord || !amount) return chord;
-    var m = /^([A-G])([#b]?)/.exec(chord);
-    if (!m) return chord;
-    var root = m[1] + m[2];
-    var rest = chord.slice(m[0].length);
-    var newRoot = transposeRoot(root, amount);
-
-    var slash = rest.indexOf("/");
-    if (slash !== -1) {
-      var suffix = rest.slice(0, slash);
-      var bass = rest.slice(slash + 1);
-      var bm = /^([A-G])([#b]?)/.exec(bass);
-      if (bm) {
-        var bassRoot = bm[1] + bm[2];
-        var bassRest = bass.slice(bm[0].length);
-        return newRoot + suffix + "/" + transposeRoot(bassRoot, amount) + bassRest;
-      }
-      return newRoot + rest;
-    }
-    return newRoot + rest;
-  }
-
-  function transposeChordList(chordsStr, amount) {
-    if (!amount) return chordsStr;
-    return chordsStr.split(",").map(function (c) { return transposeChord(c.trim(), amount); }).join(", ");
-  }
-
-  function simplifyChord(chord) {
-    var m = /^([A-G][#b]?)(m(?!aj))?/.exec(chord);
-    if (!m) return chord;
-    return m[1] + (m[2] || "");
-  }
-
-  function simplifyChordList(chordsStr) {
-    return chordsStr.split(",").map(function (c) { return simplifyChord(c.trim()); }).join(", ");
-  }
+  var CHORD_DATA_BY_ID = {};
+  CHORD_DATA.forEach(function (entry) { CHORD_DATA_BY_ID[entry.id] = entry; });
 
   /* ---------- internal chord viewer ---------- */
   var chordViewerState = {
-    index: 0,
-    transpose: 0,
-    simplified: false,
-    fontScale: 1,
+    currentId: null,
+    speedMultiplier: 1,
     autoScrollOn: false,
-    autoScrollSpeed: 32,
     autoScrollRaf: null,
     lastFrameTime: null,
     lastFocused: null
@@ -428,12 +361,10 @@
       title: document.getElementById("chord-title"),
       meta: document.getElementById("chord-meta"),
       badges: document.getElementById("chord-badges"),
-      known: document.getElementById("chord-known"),
+      strumRow: document.getElementById("chord-strum-row"),
       sections: document.getElementById("chord-sections"),
-      keyDisplay: document.getElementById("chord-key-display"),
-      simplifyBtn: document.getElementById("chord-simplify-toggle"),
-      autoScrollBtn: document.getElementById("chord-autoscroll-toggle"),
-      passBanner: document.getElementById("chord-pass-banner")
+      playBtn: document.getElementById("chord-play-toggle"),
+      playLabel: document.getElementById("chord-play-label")
     };
   }
 
@@ -444,8 +375,55 @@
     container.appendChild(span);
   }
 
+  function renderStrumItem(container, label, pattern) {
+    var item = document.createElement("div");
+    item.className = "chord-strum-item";
+    var lbl = document.createElement("span");
+    lbl.className = "chord-strum-label";
+    lbl.textContent = label;
+    var pat = document.createElement("span");
+    pat.className = "chord-strum-pattern";
+    pat.textContent = pattern;
+    item.appendChild(lbl);
+    item.appendChild(pat);
+    container.appendChild(item);
+  }
+
+  function renderLyricLine(line) {
+    var p = document.createElement("p");
+    p.className = "chord-line";
+    var text = line.lyrics || "";
+    var chords = (line.chords || []).slice().sort(function (a, b) { return a.position - b.position; });
+
+    if (!chords.length) {
+      p.textContent = text;
+      return p;
+    }
+    if (chords[0].position > 0) {
+      var lead = document.createElement("span");
+      lead.className = "chord-chunk chord-chunk-plain";
+      lead.textContent = text.slice(0, chords[0].position);
+      p.appendChild(lead);
+    }
+    chords.forEach(function (c, i) {
+      var end = (i + 1 < chords.length) ? chords[i + 1].position : text.length;
+      var chunk = document.createElement("span");
+      chunk.className = "chord-chunk";
+      var over = document.createElement("span");
+      over.className = "chord-chunk-chord";
+      over.textContent = c.chord;
+      var lyric = document.createElement("span");
+      lyric.className = "chord-chunk-lyric";
+      lyric.textContent = text.slice(c.position, end);
+      chunk.appendChild(over);
+      chunk.appendChild(lyric);
+      p.appendChild(chunk);
+    });
+    return p;
+  }
+
   function renderChordSheet() {
-    var entry = CHORD_DATA[chordViewerState.index];
+    var entry = CHORD_DATA_BY_ID[chordViewerState.currentId];
     if (!entry) return;
     var els = chordViewerEls();
 
@@ -456,19 +434,10 @@
     addBadge(els.badges, entry.difficulty);
     addBadge(els.badges, "Capo " + (entry.capo ? entry.capo.replace(/^Capo\s*/i, "") : "none"));
     addBadge(els.badges, entry.tuning + " tuning");
-    if (entry.favorite) {
-      var favBadge = document.createElement("span");
-      favBadge.className = "chord-badge chord-favorite";
-      favBadge.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8c.7 2.9 1.6 5 2.7 6.1 1.2 1.2 3.3 2 6.3 2.6-3 .8-5 1.6-6.3 2.8-1.2 1.2-2 3.3-2.7 6.4-.6-3-1.5-5.1-2.7-6.3-1.2-1.2-3.3-2.1-6.3-2.9 3-.6 5-1.4 6.3-2.6 1.2-1.2 2-3.2 2.7-6.1z" fill="currentColor"/></svg> favorite';
-      els.badges.appendChild(favBadge);
-    }
-    if (entry.simplifiedArrangement) {
-      addBadge(els.badges, "Campfire arrangement");
-    }
 
-    var displayChords = chordViewerState.simplified ? simplifyChordList(entry.knownChords) : entry.knownChords;
-    displayChords = transposeChordList(displayChords, chordViewerState.transpose);
-    els.known.textContent = displayChords;
+    els.strumRow.innerHTML = "";
+    renderStrumItem(els.strumRow, "Strumming", entry.strummingPattern);
+    renderStrumItem(els.strumRow, "Easy", entry.easyStrummingPattern);
 
     els.sections.innerHTML = "";
     entry.sections.forEach(function (section) {
@@ -478,61 +447,62 @@
       var name = document.createElement("h4");
       name.className = "chord-section-name";
       name.textContent = section.name;
+      if (section.repeatCount > 1) {
+        var rep = document.createElement("span");
+        rep.className = "chord-section-repeat";
+        rep.textContent = "play through ×" + section.repeatCount;
+        name.appendChild(rep);
+      }
       block.appendChild(name);
 
-      if (section.progression && section.progression.length) {
-        var prog = document.createElement("p");
-        prog.className = "chord-progression";
-        var shown = section.progression.map(function (c) {
-          var display = chordViewerState.simplified ? simplifyChord(c) : c;
-          return transposeChord(display, chordViewerState.transpose);
+      var lyricLines = (section.lines || []).filter(function (l) { return l.lyrics; });
+
+      if (lyricLines.length) {
+        lyricLines.forEach(function (line) {
+          block.appendChild(renderLyricLine(line));
         });
-        prog.textContent = shown.join("   ");
-        block.appendChild(prog);
-        if (section.cue) {
-          var cue = document.createElement("p");
-          cue.className = "chord-cue";
-          cue.textContent = section.cue;
-          block.appendChild(cue);
-        }
       } else {
-        var pending = document.createElement("p");
-        pending.className = "chord-pending";
-        pending.textContent = "Full progression not written down yet — use the chords above to play by ear.";
-        block.appendChild(pending);
+        var row = document.createElement("div");
+        row.className = "chord-progression-row";
+        section.progression.forEach(function (item) {
+          var slot = document.createElement("div");
+          slot.className = "chord-prog-item";
+          var chordEl = document.createElement("span");
+          chordEl.className = "chord-prog-chord";
+          chordEl.textContent = item.chord;
+          var strumEl = document.createElement("span");
+          strumEl.className = "chord-prog-strum";
+          strumEl.textContent = entry.strummingPattern;
+          slot.appendChild(chordEl);
+          slot.appendChild(strumEl);
+          row.appendChild(slot);
+        });
+        block.appendChild(row);
+        if (!section.instrumental) {
+          var pending = document.createElement("p");
+          pending.className = "chord-pending";
+          pending.textContent = "Lyrics not added yet — chords shown above to play by ear.";
+          block.appendChild(pending);
+        }
       }
 
       els.sections.appendChild(block);
     });
-
-    els.keyDisplay.textContent = chordViewerState.transpose === 0
-      ? "Original key"
-      : (chordViewerState.transpose > 0 ? "+" : "") + chordViewerState.transpose + " semitones";
-
-    els.simplifyBtn.setAttribute("aria-pressed", chordViewerState.simplified ? "true" : "false");
-    els.autoScrollBtn.setAttribute("aria-pressed", chordViewerState.autoScrollOn ? "true" : "false");
-    els.sheet.style.setProperty("--chord-font-scale", chordViewerState.fontScale);
   }
 
-  var passBannerTimer = null;
-  function showPassBanner() {
+  function setPlayButtonState(isPlaying) {
     var els = chordViewerEls();
-    if (!els.passBanner) return;
-    if (passBannerTimer) { window.clearTimeout(passBannerTimer); passBannerTimer = null; }
-    els.passBanner.classList.remove("is-visible");
-    void els.passBanner.offsetWidth;
-    els.passBanner.classList.add("is-visible");
-    passBannerTimer = window.setTimeout(function () {
-      els.passBanner.classList.remove("is-visible");
-      passBannerTimer = null;
-    }, 2600);
+    if (!els.playBtn || !els.playLabel) return;
+    els.playBtn.setAttribute("aria-pressed", isPlaying ? "true" : "false");
+    els.playLabel.innerHTML = isPlaying ? "&#10074;&#10074; Pause" : "&#9654; Play";
   }
 
-  function openChordViewer(id, opts) {
+  function openChordViewer(id) {
     var els = chordViewerEls();
     if (!els.root) return;
-    chordViewerState.index = chordIndexById(id);
-    chordViewerState.transpose = 0;
+    stopAutoScroll();
+    chordViewerState.currentId = id;
+    chordViewerState.speedMultiplier = 1;
     chordViewerState.lastFocused = document.activeElement;
 
     renderChordSheet();
@@ -543,8 +513,6 @@
 
     var closeBtn = document.getElementById("chord-close");
     if (closeBtn) closeBtn.focus();
-
-    if (opts && opts.passMessage) showPassBanner();
   }
 
   function closeChordViewer() {
@@ -559,46 +527,34 @@
     }
   }
 
-  function navChord(delta) {
-    chordViewerState.index = (chordViewerState.index + delta + CHORD_DATA.length) % CHORD_DATA.length;
-    chordViewerState.transpose = 0;
-    renderChordSheet();
-    var els = chordViewerEls();
-    if (els.body) els.body.scrollTop = 0;
-  }
-
-  function transposeCurrent(delta) {
-    chordViewerState.transpose += delta;
-    renderChordSheet();
-  }
-  function resetKey() {
-    chordViewerState.transpose = 0;
-    renderChordSheet();
-  }
-  function toggleSimplify() {
-    chordViewerState.simplified = !chordViewerState.simplified;
-    renderChordSheet();
-  }
-  function changeFontScale(delta) {
-    var next = Math.min(1.6, Math.max(0.85, chordViewerState.fontScale + delta));
-    chordViewerState.fontScale = Math.round(next * 100) / 100;
-    renderChordSheet();
-  }
-
   function startAutoScroll() {
     var els = chordViewerEls();
-    if (!els.body) return;
+    var entry = CHORD_DATA_BY_ID[chordViewerState.currentId];
+    if (!els.body || !entry) return;
     chordViewerState.autoScrollOn = true;
     chordViewerState.lastFrameTime = null;
-    if (els.autoScrollBtn) els.autoScrollBtn.setAttribute("aria-pressed", "true");
+    // Real song-length pacing means sub-1px-per-frame increments, and the
+    // scrollTop property only stores whole pixels — accumulating with
+    // `scrollTop += tinyAmount` rounds the fraction away every frame and
+    // never actually moves. Track position as a float outside the DOM instead.
+    chordViewerState.scrollPosition = els.body.scrollTop;
+    setPlayButtonState(true);
 
     function step(timestamp) {
       if (!chordViewerState.autoScrollOn) return;
       var hasOverflow = els.body.scrollHeight > els.body.clientHeight + 1;
       if (hasOverflow && chordViewerState.lastFrameTime != null) {
+        // If the person manually scrolled, adopt their position instead of
+        // fighting it — the pattern continues on from wherever they left it.
+        if (Math.abs(els.body.scrollTop - chordViewerState.scrollPosition) > 1) {
+          chordViewerState.scrollPosition = els.body.scrollTop;
+        }
         var deltaSec = (timestamp - chordViewerState.lastFrameTime) / 1000;
-        els.body.scrollTop += chordViewerState.autoScrollSpeed * deltaSec;
-        if (els.body.scrollTop + els.body.clientHeight >= els.body.scrollHeight - 1) {
+        var distance = els.body.scrollHeight - els.body.clientHeight;
+        var basePxPerSec = distance / (entry.scrollDuration || 150);
+        chordViewerState.scrollPosition += basePxPerSec * chordViewerState.speedMultiplier * deltaSec;
+        els.body.scrollTop = chordViewerState.scrollPosition;
+        if (chordViewerState.scrollPosition + els.body.clientHeight >= els.body.scrollHeight - 1) {
           stopAutoScroll();
           return;
         }
@@ -615,25 +571,16 @@
       window.cancelAnimationFrame(chordViewerState.autoScrollRaf);
       chordViewerState.autoScrollRaf = null;
     }
-    var btn = document.getElementById("chord-autoscroll-toggle");
-    if (btn) btn.setAttribute("aria-pressed", "false");
+    setPlayButtonState(false);
   }
 
-  function toggleAutoScroll() {
+  function togglePlay() {
     if (chordViewerState.autoScrollOn) stopAutoScroll();
     else startAutoScroll();
   }
 
-  function changeAutoScrollSpeed(delta) {
-    chordViewerState.autoScrollSpeed = Math.min(90, Math.max(10, chordViewerState.autoScrollSpeed + delta));
-  }
-
-  function passTheGuitar() {
-    var priorityIds = GUITAR_PRIORITY_TITLES.map(slugify);
-    var pool = priorityIds.concat(priorityIds).concat(CHORD_DATA.map(function (e) { return e.id; }));
-    var pick = pool[Math.floor(Math.random() * pool.length)];
-    sparkBurst();
-    openChordViewer(pick, { passMessage: true });
+  function changeSpeed(factor) {
+    chordViewerState.speedMultiplier = Math.round(Math.min(2.5, Math.max(0.4, chordViewerState.speedMultiplier * factor)) * 100) / 100;
   }
 
   function makeViewChordsButton(song) {
@@ -679,35 +626,12 @@
       if (e.key === "Escape" && els.root.classList.contains("is-open")) closeChordViewer();
     });
 
-    var prevBtn = document.getElementById("chord-prev");
-    if (prevBtn) prevBtn.addEventListener("click", function () { navChord(-1); });
-    var nextBtn = document.getElementById("chord-next");
-    if (nextBtn) nextBtn.addEventListener("click", function () { navChord(1); });
-
-    var passBtn = document.getElementById("chord-pass-guitar");
-    if (passBtn) passBtn.addEventListener("click", passTheGuitar);
-
-    var transposeDown = document.getElementById("chord-transpose-down");
-    if (transposeDown) transposeDown.addEventListener("click", function () { transposeCurrent(-1); });
-    var transposeUp = document.getElementById("chord-transpose-up");
-    if (transposeUp) transposeUp.addEventListener("click", function () { transposeCurrent(1); });
-    var resetBtn = document.getElementById("chord-reset-key");
-    if (resetBtn) resetBtn.addEventListener("click", resetKey);
-
-    var simplifyBtn = document.getElementById("chord-simplify-toggle");
-    if (simplifyBtn) simplifyBtn.addEventListener("click", toggleSimplify);
-
-    var autoScrollBtn = document.getElementById("chord-autoscroll-toggle");
-    if (autoScrollBtn) autoScrollBtn.addEventListener("click", toggleAutoScroll);
+    var playBtn = document.getElementById("chord-play-toggle");
+    if (playBtn) playBtn.addEventListener("click", togglePlay);
     var speedDown = document.getElementById("chord-speed-down");
-    if (speedDown) speedDown.addEventListener("click", function () { changeAutoScrollSpeed(-8); });
+    if (speedDown) speedDown.addEventListener("click", function () { changeSpeed(1 / 1.15); });
     var speedUp = document.getElementById("chord-speed-up");
-    if (speedUp) speedUp.addEventListener("click", function () { changeAutoScrollSpeed(8); });
-
-    var textDown = document.getElementById("chord-text-down");
-    if (textDown) textDown.addEventListener("click", function () { changeFontScale(-0.1); });
-    var textUp = document.getElementById("chord-text-up");
-    if (textUp) textUp.addEventListener("click", function () { changeFontScale(0.1); });
+    if (speedUp) speedUp.addEventListener("click", function () { changeSpeed(1.15); });
 
     initChordEmbers();
   }
