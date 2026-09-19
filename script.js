@@ -35,7 +35,6 @@
     year: 2022,
     chords: "Em, D, C, G",
     capo: null,
-    tab: "https://tabs.ultimate-guitar.com/tab/zach-bryan/something-in-the-orange-chords-4012711",
     spotify: "Something in the Orange Zach Bryan",
     reason: "The one that goes quiet around 1am. Everyone in the circle knows it by the second chorus, and nobody sings it too loud.",
     line: "something in the orange…"
@@ -48,38 +47,450 @@
     mood: "Last Song of the Night",
     chords: "C, Em, Am, F, G",
     capo: "Capo 5",
-    tab: "https://tabs.ultimate-guitar.com/tab/the-avett-brothers/no-hard-feelings-chords-1856008",
     spotify: "No Hard Feelings The Avett Brothers",
     reason: "For when the fire is just coals and everyone is half-asleep in their chairs. Nothing left to prove, nothing left to say.",
     line: "no hard feelings…"
   };
 
   var MAIN = [
-    { title: "Revival", artist: "Zach Bryan", year: 2022, mood: "Late Nights", chords: "Em, G, C", capo: null, note: "The simplest one on the list.", tab: "https://tabs.ultimate-guitar.com/tab/zach-bryan/revival-chords-2907779", spotify: "Revival Zach Bryan", margin: "first one I ever learned" },
-    { title: "Oklahoma Smokeshow", artist: "Zach Bryan", year: 2023, mood: "Singalongs", chords: "G, C, Em, D", capo: null, note: null, tab: "https://tabs.ultimate-guitar.com/tab/zach-bryan/oklahoma-smokeshow-chords-4272574", spotify: "Oklahoma Smokeshow Zach Bryan" },
-    { title: "East Side of Sorrow", artist: "Zach Bryan", year: 2023, mood: "Nostalgia", chords: "G, C, D, Em", capo: null, note: null, tab: "https://tabs.ultimate-guitar.com/tab/zach-bryan/east-side-of-sorrow-chords-4928983", spotify: "East Side of Sorrow Zach Bryan" },
-    { title: "Wagon Wheel", artist: "Old Crow Medicine Show", year: 2004, mood: "Singalongs", chords: "G, D, Em, C", capo: "Capo 2", note: "Same shapes as the no-capo version, minus the hard F#m.", tab: "https://tabs.ultimate-guitar.com/tab/darius-rucker/wagon-wheel-chords-1215756", spotify: "Wagon Wheel Old Crow Medicine Show", pick: true, margin: "everyone knows it by the second line" },
-    { title: "Wonderwall", artist: "Oasis", year: 1995, mood: "Nostalgia", chords: "Am, C, D, Em, G", capo: "Capo 2", note: "No barre chords in this version.", tab: "https://tabs.ultimate-guitar.com/tab/oasis/wonderwall-chords-27596", spotify: "Wonderwall Oasis" },
-    { title: "Take Me Home, Country Roads", artist: "John Denver", year: 1971, mood: "Singalongs", chords: "G, D, Em, C", capo: "Capo 2", note: "About as classic a campfire singalong as it gets.", tab: "https://tabs.ultimate-guitar.com/tab/john-denver/take-me-home-country-roads-chords-57606", spotify: "Take Me Home Country Roads John Denver" },
-    { title: "Brown Eyed Girl", artist: "Van Morrison", year: 1967, mood: "Singalongs", chords: "G, C, D", capo: null, note: "Only three chords, and everyone knows the “sha la la” part.", tab: "https://tabs.ultimate-guitar.com/tab/van-morrison/brown-eyed-girl-chords-819644", spotify: "Brown Eyed Girl Van Morrison" },
-    { title: "Ripple", artist: "Grateful Dead", year: 1970, mood: "Acoustic", chords: "G, C, D, Am, A7", capo: null, note: "A7 is a bonus chord — even easier than F.", tab: "https://tabs.ultimate-guitar.com/tab/grateful-dead/ripple-chords-462863", spotify: "Ripple Grateful Dead" },
-    { title: "Heading South", artist: "Zach Bryan", year: 2022, mood: "Late Nights", chords: "Am, G, F, C", capo: null, note: null, tab: "https://tabs.ultimate-guitar.com/tab/zach-bryan/heading-south-chords-2825888", spotify: "Heading South Zach Bryan" },
-    { title: "I Remember Everything", artist: "Zach Bryan feat. Kacey Musgraves", year: 2023, mood: "Nostalgia", chords: "Am, F, G", capo: null, note: null, tab: "https://tabs.ultimate-guitar.com/tab/zach-bryan/i-remember-everything-chords-4928905", spotify: "I Remember Everything Zach Bryan Kacey Musgraves", pick: true, margin: "capo 2 — nobody double-checks" },
-    { title: "From Austin", artist: "Zach Bryan", year: 2023, mood: "Late Nights", chords: "C, G, Am, F", capo: null, note: null, tab: "https://tabs.ultimate-guitar.com/tab/zach-bryan/from-austin-chords-4099420", spotify: "From Austin Zach Bryan" },
-    { title: "Sun to Me", artist: "Zach Bryan", year: 2023, mood: "Acoustic", chords: "C, G, Am, F", capo: null, note: null, tab: "https://tabs.ultimate-guitar.com/tab/zach-bryan/sun-to-me-chords-4200208", spotify: "Sun to Me Zach Bryan" },
-    { title: "Condemned", artist: "Zach Bryan", year: 2022, mood: "Late Nights", chords: "Am, G, F, C", capo: null, note: null, tab: "https://tabs.ultimate-guitar.com/tab/zach-bryan/condemned-chords-2810099", spotify: "Condemned Zach Bryan" },
-    { title: "Ho Hey", artist: "The Lumineers", year: 2012, mood: "Singalongs", chords: "F, C, Am, G", capo: null, note: "Everyone knows the “ho!” and “hey!” parts.", tab: "https://tabs.ultimate-guitar.com/tab/the-lumineers/ho-hey-chords-1047662", spotify: "Ho Hey The Lumineers", pick: true, margin: "the whole car sings this part" },
-    { title: "I'm Yours", artist: "Jason Mraz", year: 2008, mood: "Singalongs", chords: "C, G, Am, F", capo: null, note: "Same four chords as the Zach Bryan songs, different feel entirely.", tab: "https://tabs.ultimate-guitar.com/tab/jason-mraz/im-yours-chords-468625", spotify: "I'm Yours Jason Mraz" },
-    { title: "The Boxer", artist: "Simon & Garfunkel", year: 1970, mood: "Acoustic", chords: "C, Am, G, F", capo: null, note: "The “lie-la-lie” chorus is an easy group singalong.", tab: "https://tabs.ultimate-guitar.com/tab/simon-garfunkel/the-boxer-chords-83970", spotify: "The Boxer Simon and Garfunkel" }
+    { title: "Revival", artist: "Zach Bryan", year: 2022, mood: "Late Nights", chords: "Em, G, C", capo: null, note: "The simplest one on the list.", spotify: "Revival Zach Bryan", margin: "first one I ever learned" },
+    { title: "Oklahoma Smokeshow", artist: "Zach Bryan", year: 2023, mood: "Singalongs", chords: "G, C, Em, D", capo: null, note: null, spotify: "Oklahoma Smokeshow Zach Bryan" },
+    { title: "East Side of Sorrow", artist: "Zach Bryan", year: 2023, mood: "Nostalgia", chords: "G, C, D, Em", capo: null, note: null, spotify: "East Side of Sorrow Zach Bryan" },
+    { title: "Wagon Wheel", artist: "Old Crow Medicine Show", year: 2004, mood: "Singalongs", chords: "G, D, Em, C", capo: "Capo 2", note: "Same shapes as the no-capo version, minus the hard F#m.", spotify: "Wagon Wheel Old Crow Medicine Show", pick: true, margin: "everyone knows it by the second line" },
+    { title: "Wonderwall", artist: "Oasis", year: 1995, mood: "Nostalgia", chords: "Am, C, D, Em, G", capo: "Capo 2", note: "No barre chords in this version.", spotify: "Wonderwall Oasis" },
+    { title: "Take Me Home, Country Roads", artist: "John Denver", year: 1971, mood: "Singalongs", chords: "G, D, Em, C", capo: "Capo 2", note: "About as classic a campfire singalong as it gets.", spotify: "Take Me Home Country Roads John Denver" },
+    { title: "Brown Eyed Girl", artist: "Van Morrison", year: 1967, mood: "Singalongs", chords: "G, C, D", capo: null, note: "Only three chords, and everyone knows the “sha la la” part.", spotify: "Brown Eyed Girl Van Morrison" },
+    { title: "Ripple", artist: "Grateful Dead", year: 1970, mood: "Acoustic", chords: "G, C, D, Am, A7", capo: null, note: "A7 is a bonus chord — even easier than F.", spotify: "Ripple Grateful Dead" },
+    { title: "Heading South", artist: "Zach Bryan", year: 2022, mood: "Late Nights", chords: "Am, G, F, C", capo: null, note: null, spotify: "Heading South Zach Bryan" },
+    { title: "I Remember Everything", artist: "Zach Bryan feat. Kacey Musgraves", year: 2023, mood: "Nostalgia", chords: "Am, F, G", capo: null, note: null, spotify: "I Remember Everything Zach Bryan Kacey Musgraves", pick: true, margin: "capo 2 — nobody double-checks" },
+    { title: "From Austin", artist: "Zach Bryan", year: 2023, mood: "Late Nights", chords: "C, G, Am, F", capo: null, note: null, spotify: "From Austin Zach Bryan" },
+    { title: "Sun to Me", artist: "Zach Bryan", year: 2023, mood: "Acoustic", chords: "C, G, Am, F", capo: null, note: null, spotify: "Sun to Me Zach Bryan" },
+    { title: "Condemned", artist: "Zach Bryan", year: 2022, mood: "Late Nights", chords: "Am, G, F, C", capo: null, note: null, spotify: "Condemned Zach Bryan" },
+    { title: "Ho Hey", artist: "The Lumineers", year: 2012, mood: "Singalongs", chords: "F, C, Am, G", capo: null, note: "Everyone knows the “ho!” and “hey!” parts.", spotify: "Ho Hey The Lumineers", pick: true, margin: "the whole car sings this part" },
+    { title: "I'm Yours", artist: "Jason Mraz", year: 2008, mood: "Singalongs", chords: "C, G, Am, F", capo: null, note: "Same four chords as the Zach Bryan songs, different feel entirely.", spotify: "I'm Yours Jason Mraz" },
+    { title: "The Boxer", artist: "Simon & Garfunkel", year: 1970, mood: "Acoustic", chords: "C, Am, G, F", capo: null, note: "The “lie-la-lie” chorus is an easy group singalong.", spotify: "The Boxer Simon and Garfunkel" }
   ];
 
   var DYING = [
-    { title: "Angel from Montgomery", artist: "John Prine", year: 1971, mood: "Nostalgia", chords: "G, C, D7, F", capo: null, note: "Covered by everyone from Bonnie Raitt to John Mayer.", tab: "https://tabs.ultimate-guitar.com/tab/john-prine/angel-from-montgomery-chords-604233", spotify: "Angel from Montgomery John Prine" },
-    { title: "Society", artist: "Eddie Vedder", year: 2007, mood: "Acoustic", chords: "Am, C, G, F", capo: "Capo 2", note: "From the Into the Wild soundtrack.", tab: "https://tabs.ultimate-guitar.com/tab/eddie-vedder/society-chords-984278", spotify: "Society Eddie Vedder", margin: "play this one quiet" }
+    { title: "Angel from Montgomery", artist: "John Prine", year: 1971, mood: "Nostalgia", chords: "G, C, D7, F", capo: null, note: "Covered by everyone from Bonnie Raitt to John Mayer.", spotify: "Angel from Montgomery John Prine" },
+    { title: "Society", artist: "Eddie Vedder", year: 2007, mood: "Acoustic", chords: "Am, C, G, F", capo: "Capo 2", note: "From the Into the Wild soundtrack.", spotify: "Society Eddie Vedder", margin: "play this one quiet" }
   ];
 
   var ALL_SONGS = MAIN.concat(DYING, [FEATURED, FINALE]);
   var STORAGE_KEY = "campfire-songs-heard";
+
+  /* ---------- chord data: one reusable object per song ----------
+     Only fields already established elsewhere on this site (title,
+     artist, year, capo, the flat chord palette, favorite status) are
+     carried over. Section-by-section progressions are intentionally
+     left empty — nobody has verified real chord-sheet data for these
+     20 songs inside this project, and guessing at a specific song's
+     arrangement from general familiarity is not the same as reliable
+     data. Fill `progression` arrays in by hand when you have a real
+     source; the viewer already renders a clear "not written down
+     yet" state for anything left empty. */
+  function slugify(str) {
+    return str.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  }
+
+  function usesBarreF(chordsStr) {
+    return chordsStr.split(",").some(function (c) { return c.trim() === "F"; });
+  }
+
+  var GUITAR_PRIORITY_TITLES = [
+    "Wagon Wheel", "Wonderwall", "Take Me Home, Country Roads",
+    "Brown Eyed Girl", "Ho Hey", "I'm Yours"
+  ];
+
+  function toChordEntry(song, category) {
+    return {
+      id: slugify(song.title),
+      title: song.title,
+      artist: song.artist,
+      year: song.year,
+      category: category,
+      favorite: !!song.pick,
+      difficulty: usesBarreF(song.chords) ? "Intermediate" : "Easy",
+      capo: song.capo,
+      tuning: "Standard",
+      knownChords: song.chords,
+      spotify: song.spotify,
+      sections: [
+        { name: "Intro", progression: [], cue: "" },
+        { name: "Verse", progression: [], cue: "" },
+        { name: "Chorus", progression: [], cue: "" }
+      ]
+    };
+  }
+
+  var CHORD_DATA = [toChordEntry(FEATURED, "Featured Tonight")]
+    .concat(MAIN.map(function (s) { return toChordEntry(s, "Around the Fire"); }))
+    .concat(DYING.map(function (s) { return toChordEntry(s, "When the Fire's Dying"); }))
+    .concat([toChordEntry(FINALE, "Closing Song")]);
+
+  ALL_SONGS.forEach(function (song) { song.id = slugify(song.title); });
+
+  function chordIndexById(id) {
+    for (var i = 0; i < CHORD_DATA.length; i++) {
+      if (CHORD_DATA[i].id === id) return i;
+    }
+    return 0;
+  }
+
+  /* ---------- chord transposition + simplification utility ---------- */
+  var CHROMATIC = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+  var NOTE_INDEX = {
+    C: 0, "B#": 0, "C#": 1, Db: 1, D: 2, "D#": 3, Eb: 3, E: 4, Fb: 4,
+    F: 5, "E#": 5, "F#": 6, Gb: 6, G: 7, "G#": 8, Ab: 8, A: 9,
+    "A#": 10, Bb: 10, B: 11, Cb: 11
+  };
+
+  function transposeRoot(root, amount) {
+    var idx = NOTE_INDEX[root];
+    if (idx === undefined) return root;
+    var next = ((idx + amount) % 12 + 12) % 12;
+    return CHROMATIC[next];
+  }
+
+  function transposeChord(chord, amount) {
+    if (!chord || !amount) return chord;
+    var m = /^([A-G])([#b]?)/.exec(chord);
+    if (!m) return chord;
+    var root = m[1] + m[2];
+    var rest = chord.slice(m[0].length);
+    var newRoot = transposeRoot(root, amount);
+
+    var slash = rest.indexOf("/");
+    if (slash !== -1) {
+      var suffix = rest.slice(0, slash);
+      var bass = rest.slice(slash + 1);
+      var bm = /^([A-G])([#b]?)/.exec(bass);
+      if (bm) {
+        var bassRoot = bm[1] + bm[2];
+        var bassRest = bass.slice(bm[0].length);
+        return newRoot + suffix + "/" + transposeRoot(bassRoot, amount) + bassRest;
+      }
+      return newRoot + rest;
+    }
+    return newRoot + rest;
+  }
+
+  function transposeChordList(chordsStr, amount) {
+    if (!amount) return chordsStr;
+    return chordsStr.split(",").map(function (c) { return transposeChord(c.trim(), amount); }).join(", ");
+  }
+
+  function simplifyChord(chord) {
+    var m = /^([A-G][#b]?)(m(?!aj))?/.exec(chord);
+    if (!m) return chord;
+    return m[1] + (m[2] || "");
+  }
+
+  function simplifyChordList(chordsStr) {
+    return chordsStr.split(",").map(function (c) { return simplifyChord(c.trim()); }).join(", ");
+  }
+
+  /* ---------- internal chord viewer ---------- */
+  var chordViewerState = {
+    index: 0,
+    transpose: 0,
+    simplified: false,
+    fontScale: 1,
+    autoScrollOn: false,
+    autoScrollSpeed: 32,
+    autoScrollRaf: null,
+    lastFrameTime: null,
+    lastFocused: null
+  };
+
+  function chordViewerEls() {
+    return {
+      root: document.getElementById("chord-viewer"),
+      sheet: document.getElementById("chord-sheet"),
+      body: document.getElementById("chord-sheet-body"),
+      title: document.getElementById("chord-title"),
+      meta: document.getElementById("chord-meta"),
+      badges: document.getElementById("chord-badges"),
+      known: document.getElementById("chord-known"),
+      sections: document.getElementById("chord-sections"),
+      keyDisplay: document.getElementById("chord-key-display"),
+      simplifyBtn: document.getElementById("chord-simplify-toggle"),
+      autoScrollBtn: document.getElementById("chord-autoscroll-toggle"),
+      passBanner: document.getElementById("chord-pass-banner")
+    };
+  }
+
+  function addBadge(container, text) {
+    var span = document.createElement("span");
+    span.className = "chord-badge";
+    span.textContent = text;
+    container.appendChild(span);
+  }
+
+  function renderChordSheet() {
+    var entry = CHORD_DATA[chordViewerState.index];
+    if (!entry) return;
+    var els = chordViewerEls();
+
+    els.title.textContent = entry.title;
+    els.meta.textContent = entry.artist + " · " + entry.year;
+
+    els.badges.innerHTML = "";
+    addBadge(els.badges, entry.difficulty);
+    addBadge(els.badges, "Capo " + (entry.capo ? entry.capo.replace(/^Capo\s*/i, "") : "none"));
+    addBadge(els.badges, entry.tuning + " tuning");
+    if (entry.favorite) {
+      var favBadge = document.createElement("span");
+      favBadge.className = "chord-badge chord-favorite";
+      favBadge.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8c.7 2.9 1.6 5 2.7 6.1 1.2 1.2 3.3 2 6.3 2.6-3 .8-5 1.6-6.3 2.8-1.2 1.2-2 3.3-2.7 6.4-.6-3-1.5-5.1-2.7-6.3-1.2-1.2-3.3-2.1-6.3-2.9 3-.6 5-1.4 6.3-2.6 1.2-1.2 2-3.2 2.7-6.1z" fill="currentColor"/></svg> favorite';
+      els.badges.appendChild(favBadge);
+    }
+
+    var displayChords = chordViewerState.simplified ? simplifyChordList(entry.knownChords) : entry.knownChords;
+    displayChords = transposeChordList(displayChords, chordViewerState.transpose);
+    els.known.textContent = displayChords;
+
+    els.sections.innerHTML = "";
+    entry.sections.forEach(function (section) {
+      var block = document.createElement("div");
+      block.className = "chord-section";
+
+      var name = document.createElement("h4");
+      name.className = "chord-section-name";
+      name.textContent = section.name;
+      block.appendChild(name);
+
+      if (section.progression && section.progression.length) {
+        var prog = document.createElement("p");
+        prog.className = "chord-progression";
+        var shown = section.progression.map(function (c) {
+          var display = chordViewerState.simplified ? simplifyChord(c) : c;
+          return transposeChord(display, chordViewerState.transpose);
+        });
+        prog.textContent = shown.join("   ");
+        block.appendChild(prog);
+        if (section.cue) {
+          var cue = document.createElement("p");
+          cue.className = "chord-cue";
+          cue.textContent = section.cue;
+          block.appendChild(cue);
+        }
+      } else {
+        var pending = document.createElement("p");
+        pending.className = "chord-pending";
+        pending.textContent = "Full progression not written down yet — use the chords above to play by ear.";
+        block.appendChild(pending);
+      }
+
+      els.sections.appendChild(block);
+    });
+
+    els.keyDisplay.textContent = chordViewerState.transpose === 0
+      ? "Original key"
+      : (chordViewerState.transpose > 0 ? "+" : "") + chordViewerState.transpose + " semitones";
+
+    els.simplifyBtn.setAttribute("aria-pressed", chordViewerState.simplified ? "true" : "false");
+    els.autoScrollBtn.setAttribute("aria-pressed", chordViewerState.autoScrollOn ? "true" : "false");
+    els.sheet.style.setProperty("--chord-font-scale", chordViewerState.fontScale);
+  }
+
+  var passBannerTimer = null;
+  function showPassBanner() {
+    var els = chordViewerEls();
+    if (!els.passBanner) return;
+    if (passBannerTimer) { window.clearTimeout(passBannerTimer); passBannerTimer = null; }
+    els.passBanner.classList.remove("is-visible");
+    void els.passBanner.offsetWidth;
+    els.passBanner.classList.add("is-visible");
+    passBannerTimer = window.setTimeout(function () {
+      els.passBanner.classList.remove("is-visible");
+      passBannerTimer = null;
+    }, 2600);
+  }
+
+  function openChordViewer(id, opts) {
+    var els = chordViewerEls();
+    if (!els.root) return;
+    chordViewerState.index = chordIndexById(id);
+    chordViewerState.transpose = 0;
+    chordViewerState.lastFocused = document.activeElement;
+
+    renderChordSheet();
+    els.root.classList.add("is-open");
+    els.root.setAttribute("aria-hidden", "false");
+    document.body.classList.add("chord-viewer-open");
+    if (els.body) els.body.scrollTop = 0;
+
+    var closeBtn = document.getElementById("chord-close");
+    if (closeBtn) closeBtn.focus();
+
+    if (opts && opts.passMessage) showPassBanner();
+  }
+
+  function closeChordViewer() {
+    var els = chordViewerEls();
+    if (!els.root || !els.root.classList.contains("is-open")) return;
+    stopAutoScroll();
+    els.root.classList.remove("is-open");
+    els.root.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("chord-viewer-open");
+    if (chordViewerState.lastFocused && typeof chordViewerState.lastFocused.focus === "function") {
+      chordViewerState.lastFocused.focus();
+    }
+  }
+
+  function navChord(delta) {
+    chordViewerState.index = (chordViewerState.index + delta + CHORD_DATA.length) % CHORD_DATA.length;
+    chordViewerState.transpose = 0;
+    renderChordSheet();
+    var els = chordViewerEls();
+    if (els.body) els.body.scrollTop = 0;
+  }
+
+  function transposeCurrent(delta) {
+    chordViewerState.transpose += delta;
+    renderChordSheet();
+  }
+  function resetKey() {
+    chordViewerState.transpose = 0;
+    renderChordSheet();
+  }
+  function toggleSimplify() {
+    chordViewerState.simplified = !chordViewerState.simplified;
+    renderChordSheet();
+  }
+  function changeFontScale(delta) {
+    var next = Math.min(1.6, Math.max(0.85, chordViewerState.fontScale + delta));
+    chordViewerState.fontScale = Math.round(next * 100) / 100;
+    renderChordSheet();
+  }
+
+  function startAutoScroll() {
+    var els = chordViewerEls();
+    if (!els.body) return;
+    chordViewerState.autoScrollOn = true;
+    chordViewerState.lastFrameTime = null;
+    if (els.autoScrollBtn) els.autoScrollBtn.setAttribute("aria-pressed", "true");
+
+    function step(timestamp) {
+      if (!chordViewerState.autoScrollOn) return;
+      var hasOverflow = els.body.scrollHeight > els.body.clientHeight + 1;
+      if (hasOverflow && chordViewerState.lastFrameTime != null) {
+        var deltaSec = (timestamp - chordViewerState.lastFrameTime) / 1000;
+        els.body.scrollTop += chordViewerState.autoScrollSpeed * deltaSec;
+        if (els.body.scrollTop + els.body.clientHeight >= els.body.scrollHeight - 1) {
+          stopAutoScroll();
+          return;
+        }
+      }
+      chordViewerState.lastFrameTime = timestamp;
+      chordViewerState.autoScrollRaf = window.requestAnimationFrame(step);
+    }
+    chordViewerState.autoScrollRaf = window.requestAnimationFrame(step);
+  }
+
+  function stopAutoScroll() {
+    chordViewerState.autoScrollOn = false;
+    if (chordViewerState.autoScrollRaf) {
+      window.cancelAnimationFrame(chordViewerState.autoScrollRaf);
+      chordViewerState.autoScrollRaf = null;
+    }
+    var btn = document.getElementById("chord-autoscroll-toggle");
+    if (btn) btn.setAttribute("aria-pressed", "false");
+  }
+
+  function toggleAutoScroll() {
+    if (chordViewerState.autoScrollOn) stopAutoScroll();
+    else startAutoScroll();
+  }
+
+  function changeAutoScrollSpeed(delta) {
+    chordViewerState.autoScrollSpeed = Math.min(90, Math.max(10, chordViewerState.autoScrollSpeed + delta));
+  }
+
+  function passTheGuitar() {
+    var priorityIds = GUITAR_PRIORITY_TITLES.map(slugify);
+    var pool = priorityIds.concat(priorityIds).concat(CHORD_DATA.map(function (e) { return e.id; }));
+    var pick = pool[Math.floor(Math.random() * pool.length)];
+    sparkBurst();
+    openChordViewer(pick, { passMessage: true });
+  }
+
+  function makeViewChordsButton(song) {
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "listen-link view-chords-link";
+    btn.textContent = "view chords";
+    btn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      openChordViewer(song.id);
+    });
+    return btn;
+  }
+
+  function initChordEmbers() {
+    var el = document.getElementById("chord-embers");
+    var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!el || reduceMotion) return;
+    for (var i = 0; i < 6; i++) {
+      var span = document.createElement("span");
+      span.className = "ember";
+      span.style.setProperty("--x", (10 + Math.random() * 80).toFixed(1) + "%");
+      span.style.setProperty("--size", (2 + Math.random() * 2.5).toFixed(1) + "px");
+      span.style.setProperty("--dur", (6 + Math.random() * 6).toFixed(2) + "s");
+      span.style.setProperty("--delay", (Math.random() * 6).toFixed(2) + "s");
+      span.style.setProperty("--drift", (Math.random() * 40 - 20).toFixed(0) + "px");
+      el.appendChild(span);
+    }
+  }
+
+  function initChordViewer() {
+    var els = chordViewerEls();
+    if (!els.root) return;
+
+    var closeBtn = document.getElementById("chord-close");
+    if (closeBtn) closeBtn.addEventListener("click", closeChordViewer);
+
+    els.root.addEventListener("click", function (e) {
+      if (e.target === els.root) closeChordViewer();
+    });
+
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && els.root.classList.contains("is-open")) closeChordViewer();
+    });
+
+    var prevBtn = document.getElementById("chord-prev");
+    if (prevBtn) prevBtn.addEventListener("click", function () { navChord(-1); });
+    var nextBtn = document.getElementById("chord-next");
+    if (nextBtn) nextBtn.addEventListener("click", function () { navChord(1); });
+
+    var passBtn = document.getElementById("chord-pass-guitar");
+    if (passBtn) passBtn.addEventListener("click", passTheGuitar);
+
+    var transposeDown = document.getElementById("chord-transpose-down");
+    if (transposeDown) transposeDown.addEventListener("click", function () { transposeCurrent(-1); });
+    var transposeUp = document.getElementById("chord-transpose-up");
+    if (transposeUp) transposeUp.addEventListener("click", function () { transposeCurrent(1); });
+    var resetBtn = document.getElementById("chord-reset-key");
+    if (resetBtn) resetBtn.addEventListener("click", resetKey);
+
+    var simplifyBtn = document.getElementById("chord-simplify-toggle");
+    if (simplifyBtn) simplifyBtn.addEventListener("click", toggleSimplify);
+
+    var autoScrollBtn = document.getElementById("chord-autoscroll-toggle");
+    if (autoScrollBtn) autoScrollBtn.addEventListener("click", toggleAutoScroll);
+    var speedDown = document.getElementById("chord-speed-down");
+    if (speedDown) speedDown.addEventListener("click", function () { changeAutoScrollSpeed(-8); });
+    var speedUp = document.getElementById("chord-speed-up");
+    if (speedUp) speedUp.addEventListener("click", function () { changeAutoScrollSpeed(8); });
+
+    var textDown = document.getElementById("chord-text-down");
+    if (textDown) textDown.addEventListener("click", function () { changeFontScale(-0.1); });
+    var textUp = document.getElementById("chord-text-up");
+    if (textUp) textUp.addEventListener("click", function () { changeFontScale(0.1); });
+
+    initChordEmbers();
+  }
 
   function loadHeard() {
     try {
@@ -166,22 +577,16 @@
 
     var detail = document.createElement("p");
     detail.className = "track-detail";
-    detail.textContent = "Played on " + song.chords + (song.note ? " — " + song.note : "") + " ";
-    if (song.tab) {
-      var tabLink = document.createElement("a");
-      tabLink.href = song.tab;
-      tabLink.target = "_blank";
-      tabLink.rel = "noopener noreferrer";
-      tabLink.className = "chord-link";
-      tabLink.textContent = "chord chart ↗";
-      tabLink.addEventListener("click", function (e) { e.stopPropagation(); });
-      detail.appendChild(tabLink);
-    }
+    detail.textContent = "Played on " + song.chords + (song.note ? " — " + song.note : "");
 
     main.appendChild(headline);
     main.appendChild(meta);
     main.appendChild(detail);
 
+    var actions = document.createElement("div");
+    actions.className = "track-actions";
+
+    var chordsBtn = makeViewChordsButton(song);
     var listen = document.createElement("a");
     listen.className = "listen-link";
     listen.href = "https://open.spotify.com/search/" + encodeURIComponent(song.spotify);
@@ -191,9 +596,12 @@
     listen.appendChild(document.createTextNode("listen ↗"));
     listen.addEventListener("click", function (e) { e.stopPropagation(); });
 
+    actions.appendChild(chordsBtn);
+    actions.appendChild(listen);
+
     track.appendChild(num);
     track.appendChild(main);
-    track.appendChild(listen);
+    track.appendChild(actions);
 
     if (song.margin) {
       var scrawl = document.createElement("p");
@@ -263,9 +671,12 @@
     link.appendChild(spotifyGlyph());
     link.appendChild(document.createTextNode("listen on Spotify ↗"));
 
+    var chordsBtn = makeViewChordsButton(song);
+    chordsBtn.classList.add("big");
     var heardBtn = makeHeardToggle(song);
 
     actions.appendChild(link);
+    actions.appendChild(chordsBtn);
     actions.appendChild(heardBtn);
 
     text.appendChild(h);
@@ -635,5 +1046,6 @@
     initNearGlow();
     initCampfireMode();
     initSoundToggle();
+    initChordViewer();
   });
 })();
