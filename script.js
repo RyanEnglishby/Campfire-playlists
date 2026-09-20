@@ -1120,7 +1120,7 @@
         pills.forEach(function (p) { p.classList.remove("is-active"); });
         pill.classList.add("is-active");
         var mood = pill.dataset.mood;
-        document.querySelectorAll("#list-main .track").forEach(function (track) {
+        document.querySelectorAll("#list-main .track, #list-dying .track").forEach(function (track) {
           var show = mood === "all" || track.dataset.mood === mood;
           track.classList.toggle("is-hidden", !show);
         });
@@ -1161,7 +1161,7 @@
       pills.forEach(function (p) { p.classList.remove("is-active"); });
       var allPill = document.querySelector('.tag-filter[data-mood="all"]');
       if (allPill) allPill.classList.add("is-active");
-      document.querySelectorAll("#list-main .track").forEach(function (track) {
+      document.querySelectorAll("#list-main .track, #list-dying .track").forEach(function (track) {
         track.classList.remove("is-hidden");
       });
 
