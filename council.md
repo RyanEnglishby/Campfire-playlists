@@ -25,3 +25,8 @@ Key claim: Every dollar figure in this analysis is fiction until a real Stripe P
 Agent: Believer
 Position: The hard part — hands-free, beat-accurate auto-scroll — is already built and working, which turns this from a feasibility bet into a content-and-distribution bet.
 Key claim: The chord/lyric auto-scroll engine (musical-time-driven via playAlongBpm × beats, never estimated scroll speed) and a real-time autocorrelation pitch-detection tuner both went from zero to working across 20 songs in two days per this repo's own git log (2026-09-18 to 2026-09-20) — meaning the single biggest technical risk in the idea is retired, checkable code, not a roadmap promise.
+
+## 2026-09-20 — Campfire Songs
+Agent: Judge
+Position: FIX FIRST
+Key claim: contact.js's CONTACT_EMAIL is still the unset placeholder "REPLACE-WITH-YOUR-EMAIL," so despite two working technical builds (scroll engine, tuner) the project has captured zero real signal from a stranger — fix lead capture and prove one stranger will pay or return before adding another song or feature.
