@@ -4,7 +4,7 @@
   // TODO(site owner): put the real inbox that should receive these here.
   // Until this contains an "@", the forms will say so instead of silently
   // trying to send anywhere.
-  var CONTACT_EMAIL = "REPLACE-WITH-YOUR-EMAIL";
+  var CONTACT_EMAIL = "CampChord@gmail.com";
   var EMAIL_CONFIGURED = CONTACT_EMAIL.indexOf("@") !== -1;
 
   var NOT_CONFIGURED_MSG = "This form isn't connected to an email address yet, so nothing can send. (Site owner: set CONTACT_EMAIL in contact.js.)";
