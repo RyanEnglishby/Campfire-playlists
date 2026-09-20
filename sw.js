@@ -1,6 +1,6 @@
 "use strict";
 
-var CACHE_NAME = "campfire-songs-v1";
+var CACHE_NAME = "campfire-songs-v2";
 var PRECACHE_URLS = [
   "index.html",
   "tuner.html",
@@ -37,28 +37,26 @@ self.addEventListener("activate", function (event) {
   self.clients.claim();
 });
 
-// Stale-while-revalidate: serve instantly from cache when available, and
-// refresh the cache from the network in the background for next time. Keeps
-// the app feeling instant without permanently freezing content that ships
-// updates often.
+// Network-first, cache as an offline fallback only. This site ships updates
+// often, and stale-while-revalidate was serving the previous deploy's files
+// for one full visit after every release (cache first, refresh in the
+// background for *next* time) -- confusing after a just-shipped fix. Always
+// prefer a fresh network response when online; fall back to cache only when
+// the network truly fails, and keep the cache warm from whatever succeeds.
 self.addEventListener("fetch", function (event) {
   if (event.request.method !== "GET") return;
 
   event.respondWith(
-    caches.open(CACHE_NAME).then(function (cache) {
-      return cache.match(event.request).then(function (cached) {
-        var networkFetch = fetch(event.request)
-          .then(function (response) {
-            if (response && response.status === 200) {
-              cache.put(event.request, response.clone());
-            }
-            return response;
-          })
-          .catch(function () {
-            return cached;
-          });
-        return cached || networkFetch;
-      });
-    })
+    fetch(event.request, { cache: "no-store" })
+      .then(function (response) {
+        if (response && response.status === 200) {
+          var toCache = response.clone();
+          caches.open(CACHE_NAME).then(function (cache) { cache.put(event.request, toCache); });
+        }
+        return response;
+      })
+      .catch(function () {
+        return caches.match(event.request);
+      })
   );
 });
