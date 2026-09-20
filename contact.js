@@ -11,7 +11,7 @@
   // send immediately with no email app involved. Until this is set, forms
   // fall back to the mailto behavior above -- both are always honest about
   // which one actually happened.
-  var FORMSPREE_ENDPOINT = "https://formspree.io/f/REPLACE-WITH-YOUR-FORM-ID";
+  var FORMSPREE_ENDPOINT = "https://formspree.io/f/meaoaggv";
   var FORMSPREE_CONFIGURED = FORMSPREE_ENDPOINT.indexOf("REPLACE-WITH-YOUR-FORM-ID") === -1;
 
   var NOT_CONFIGURED_MSG = "This form isn't connected to an email address yet, so nothing can send. (Site owner: set CONTACT_EMAIL in contact.js.)";
