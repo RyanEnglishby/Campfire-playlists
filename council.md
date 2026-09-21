@@ -30,3 +30,8 @@ Key claim: The chord/lyric auto-scroll engine (musical-time-driven via playAlong
 Agent: Judge
 Position: The core solo play-along is stranger-ready; multiplayer isn't yet; the real risk is that 30 hours of new features shipped since the last verdict with zero new demand evidence and no instrumentation on the two biggest additions.
 Key claim: Since the last Council verdict, 17 substantive commits shipped full Supabase-backed multiplayer, three song-selection modes, and a photo-memories feature — and analytics.js (read in full) fires events for songs, the tuner, and the two contact forms, but has no event for a campfire room being created/joined or a memory being saved, so the two newest, biggest features are also the two nobody can currently tell are being used.
+
+## 2026-09-21 — Campfire Songs
+Agent: Judge
+Position: Freeze new features and spend the next 7 days getting real strangers onto the existing product, not building more — the Investor's "prove payment before adding features" instruction was skipped for a full round and needs to happen now, not later.
+Key claim: Every feature shipped since round 1 (synced multiplayer via Supabase, Memories, Random/Vote/Host-Picks) improves the product without touching the actual open question — zero strangers have used this, zero payment signal exists, and the one true new differentiator (live multiplayer sync) is untested at real low-signal campfire locations, which is the most likely way it embarrasses the team in front of the first strangers who try it.
