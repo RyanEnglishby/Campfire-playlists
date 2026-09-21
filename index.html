@@ -319,10 +319,21 @@
       <button type="button" class="site-modal-close" data-close-modal aria-label="Close">&times;</button>
     </div>
     <form class="contact-form" id="add-memory-form" novalidate>
-      <label class="contact-field">
+      <div class="contact-field">
         <span>Photo<em>required</em></span>
-        <input type="file" id="memory-photo" accept="image/*" capture="environment" required>
-      </label>
+        <div class="memory-photo-actions">
+          <button type="button" class="memory-photo-action-btn" id="memory-photo-camera-btn">
+            <span class="memory-photo-action-icon" aria-hidden="true">📸</span>
+            <span>Take Photo</span>
+          </button>
+          <button type="button" class="memory-photo-action-btn" id="memory-photo-gallery-btn">
+            <span class="memory-photo-action-icon" aria-hidden="true">🖼️</span>
+            <span>Choose from Camera Roll</span>
+          </button>
+        </div>
+        <input type="file" id="memory-photo-camera-input" accept="image/*" capture="environment" hidden>
+        <input type="file" id="memory-photo-gallery-input" accept="image/*" hidden>
+      </div>
       <div class="memory-photo-preview" id="memory-photo-preview" hidden>
         <img id="memory-photo-preview-img" alt="">
       </div>
