@@ -1,6 +1,6 @@
 "use strict";
 
-var CACHE_NAME = "campfire-songs-v3";
+var CACHE_NAME = "campfire-songs-v4";
 var PRECACHE_URLS = [
   "index.html",
   "tuner.html",
