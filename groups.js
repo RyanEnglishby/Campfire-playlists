@@ -186,7 +186,8 @@
         p_paused_at_sec: next.pausedAtSec
       })
       .then(function (res) {
-        if (res.error || res.data !== true) throw new Error("Campfire Groups: host update rejected");
+        if (res.error) throw res.error;
+        if (res.data !== true) throw new Error("host update didn't match any room (wrong secret or code?)");
       });
   }
 
@@ -194,7 +195,8 @@
     return getClient()
       .rpc("start_campfire_vote", { p_code: room.code, p_secret: room.hostSecret })
       .then(function (res) {
-        if (res.error || res.data !== true) throw new Error("Campfire Groups: couldn't open voting");
+        if (res.error) throw res.error;
+        if (res.data !== true) throw new Error("start-vote didn't match any room (wrong secret or code?)");
       });
   }
 
@@ -202,7 +204,8 @@
     return getClient()
       .rpc("finalize_campfire_vote", { p_code: room.code, p_secret: room.hostSecret, p_song_id: songId })
       .then(function (res) {
-        if (res.error || res.data !== true) throw new Error("Campfire Groups: couldn't finalize the vote");
+        if (res.error) throw res.error;
+        if (res.data !== true) throw new Error("finalize-vote didn't match any room (wrong secret or code?)");
       });
   }
 
@@ -258,8 +261,12 @@
 
   function castVote(songId) {
     if (!room || !room.votingOpen) return;
-    castVoteRpc(songId).catch(function () {
-      window.alert("Couldn't record your vote — check your connection and try again.");
+    castVoteRpc(songId).catch(function (err) {
+      var detail = err && err.message;
+      window.alert(
+        "Couldn't record your vote — check your connection and try again." +
+        (detail ? "\n\n(" + detail + ")" : "")
+      );
     });
   }
 
@@ -438,8 +445,12 @@
     pushRoomState({ status: "playing", startAt: startAt }).catch(showHostError);
   }
 
-  function showHostError() {
-    window.alert("Couldn't update the campfire — check your connection and try again.");
+  function showHostError(err) {
+    var detail = err && (err.message || err.error_description || err.hint);
+    window.alert(
+      "Couldn't update the campfire — check your connection and try again." +
+      (detail ? "\n\n(" + detail + ")" : "")
+    );
   }
 
   // ---- presence / roster --------------------------------------------------
