@@ -112,7 +112,7 @@
   font-size: 11px;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--ember-deep);
+  color: var(--ember-ink);
   margin: 0 0 6px;
 }
 .memory-caption {
@@ -124,8 +124,8 @@
 }
 .memory-date {
   font-family: var(--font-mono);
-  font-size: 10.5px;
-  color: #8a7355;
+  font-size: 11px;
+  color: #5a4530;
   margin: 0;
 }
 
@@ -183,7 +183,7 @@
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(230, 180, 120, 0.25);
   border-radius: 8px;
-  color: var(--cream-dim);
+  color: var(--ink);
   font-family: var(--font-body);
   font-size: 12.5px;
   line-height: 1.3;

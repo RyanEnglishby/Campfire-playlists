@@ -51,12 +51,17 @@
   transform: rotate(-0.4deg);
 }
 
+/* .btn-secondary is tuned for the dark page background (--cream-dim text) --
+   inside the light --paper panel it needs a dark-on-light override instead */
+.groups-panel .btn-secondary { color: var(--ink); border-color: rgba(60, 40, 20, 0.35); }
+.groups-panel .btn-secondary:hover { color: var(--ember-ink); border-color: var(--ember-ink); }
+
 .groups-code-label {
   font-family: var(--font-mono);
   font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--ember-deep);
+  color: var(--ember-ink);
   margin: 0 0 6px;
 }
 
@@ -99,7 +104,7 @@
   font-family: var(--font-mono);
   font-size: 15px;
   letter-spacing: 0.04em;
-  color: var(--ember-deep);
+  color: var(--ember-ink);
   margin: 0 0 18px;
 }
 
@@ -120,7 +125,7 @@
   font-size: 11px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #8a7355;
+  color: #5a4530;
   margin: 0 0 10px;
   text-align: left;
 }
@@ -149,14 +154,14 @@
 
 .groups-roster-ready {
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: 11px;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #8a7355;
+  color: #5a4530;
 }
 
 .groups-roster-ready.is-ready {
-  color: #3f7d3a;
+  color: #2a5c27;
   font-weight: 600;
 }
 
@@ -165,7 +170,7 @@
   border: none;
   font-family: var(--font-mono);
   font-size: 12px;
-  color: #8a7355;
+  color: #5a4530;
   text-decoration: underline;
   cursor: pointer;
   padding: 4px;
@@ -257,13 +262,13 @@
   display: block;
   font-family: var(--font-hand);
   font-size: 20px;
-  color: var(--amber);
+  color: var(--amber-ink);
 }
 
 .groups-mode-desc {
   display: block;
   font-size: 13px;
-  color: var(--cream-dim);
+  color: #5a4530;
   line-height: 1.4;
   margin-top: 2px;
 }
@@ -281,7 +286,7 @@
   font-size: 11px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--ember-deep);
+  color: var(--ember-ink);
   margin: 0 0 6px;
 }
 .groups-random-song {
@@ -345,7 +350,7 @@
 .groups-vote-row-count {
   font-family: var(--font-mono);
   font-size: 11px;
-  color: #8a7355;
+  color: #5a4530;
   flex-shrink: 0;
   min-width: 3.5em;
   text-align: right;
