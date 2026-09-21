@@ -406,6 +406,16 @@
   var DEFAULT_SPEED_INDEX = 3; // 1.0x
   var AUTOSCROLL_TOP_MARGIN = 24; // px of breathing room above the active row so it's never flush against the top edge
 
+  // Listeners for "a song finished playing on its own" -- distinct from a
+  // manual pause, which never fires this. Campfire Groups uses it to
+  // auto-advance in Random/Vote modes; nothing else currently listens.
+  var endedListeners = [];
+  function fireEnded() {
+    endedListeners.slice().forEach(function (fn) {
+      try { fn(); } catch (e) {}
+    });
+  }
+
   var chordViewerState = {
     currentId: null,
     speedIndex: DEFAULT_SPEED_INDEX,
@@ -776,6 +786,7 @@
 
         if (progressFrac >= 1) {
           stopAutoScroll();
+          fireEnded();
           return;
         }
       }
@@ -1467,11 +1478,14 @@
     pause: function () { stopAutoScroll(); },
     isPlaying: function () { return !!(chordViewerState.autoScrollOn || chordViewerState.countInActive); },
     getElapsed: function () { return chordViewerState.currentTime || 0; },
+    getTotalSec: function () { return (chordViewerState.timeline && chordViewerState.timeline.totalSec) || 0; },
+    onEnded: function (fn) { if (typeof fn === "function") endedListeners.push(fn); },
     getCurrentSongId: function () { return chordViewerState.currentId || null; },
     isOpen: function () {
       var els = chordViewerEls();
       return !!(els.root && els.root.classList.contains("is-open"));
-    }
+    },
+    close: function () { closeChordViewer(); }
   };
 
   document.addEventListener("DOMContentLoaded", function () {

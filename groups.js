@@ -26,7 +26,7 @@
   var supabaseClient = null;
   var channel = null;
   var countdownInterval = null;
-  var room = null; // { id, code, isHost, hostSecret, songId, status, startAt, pausedAtSec, createdAt }
+  var room = null; // { id, code, isHost, hostSecret, songId, status, startAt, pausedAtSec, mode, votes, votingOpen, createdAt }
   var myPresenceKey = null;
   var myLabel = null;
   var iAmReady = false;
@@ -64,6 +64,18 @@
     els.floatStart = $("groups-float-start");
     els.floatPause = $("groups-float-pause");
     els.floatResume = $("groups-float-resume");
+    els.floatVoteStart = $("groups-float-vote-start");
+    els.modeModal = $("groups-mode-modal");
+    els.modeCards = document.querySelectorAll(".groups-mode-card");
+    els.randomDisplay = $("groups-random-display");
+    els.randomSongTitle = $("groups-random-song-title");
+    els.votePanel = $("groups-vote-panel");
+    els.voteOpenWrap = $("groups-vote-open-wrap");
+    els.voteClosedWrap = $("groups-vote-closed-wrap");
+    els.voteClosedLabel = $("groups-vote-closed-label");
+    els.voteStartBtn = $("groups-vote-start-btn");
+    els.voteFinalizeBtn = $("groups-vote-finalize-btn");
+    els.voteList = $("groups-vote-list");
   }
 
   // ---- small helpers --------------------------------------------------
@@ -119,11 +131,13 @@
   }
 
   // ---- Supabase reads/writes ------------------------------------------
-  function createRoomRow(code, hostSecret) {
+  var ROOM_COLUMNS = "id, code, song_id, status, start_at, paused_at_sec, mode, votes, voting_open, created_at";
+
+  function createRoomRow(code, hostSecret, mode) {
     return getClient()
       .from("campfire_rooms")
-      .insert({ code: code, host_secret: hostSecret })
-      .select("id, code, created_at")
+      .insert({ code: code, host_secret: hostSecret, mode: mode })
+      .select(ROOM_COLUMNS)
       .single()
       .then(function (res) {
         if (res.error) throw res.error;
@@ -134,7 +148,7 @@
   function fetchRoomByCode(code) {
     return getClient()
       .from("campfire_rooms")
-      .select("id, code, song_id, status, start_at, paused_at_sec, created_at")
+      .select(ROOM_COLUMNS)
       .eq("code", code)
       .single()
       .then(function (res) {
@@ -146,7 +160,7 @@
   function fetchRoomById(id) {
     return getClient()
       .from("campfire_rooms")
-      .select("id, code, song_id, status, start_at, paused_at_sec, created_at")
+      .select(ROOM_COLUMNS)
       .eq("id", id)
       .single()
       .then(function (res) {
@@ -176,6 +190,31 @@
       });
   }
 
+  function startVotingRoundRpc() {
+    return getClient()
+      .rpc("start_campfire_vote", { p_code: room.code, p_secret: room.hostSecret })
+      .then(function (res) {
+        if (res.error || res.data !== true) throw new Error("Campfire Groups: couldn't open voting");
+      });
+  }
+
+  function finalizeVoteRpc(songId) {
+    return getClient()
+      .rpc("finalize_campfire_vote", { p_code: room.code, p_secret: room.hostSecret, p_song_id: songId })
+      .then(function (res) {
+        if (res.error || res.data !== true) throw new Error("Campfire Groups: couldn't finalize the vote");
+      });
+  }
+
+  function castVoteRpc(songId) {
+    return getClient()
+      .rpc("cast_campfire_vote", { p_code: room.code, p_voter_key: myPresenceKey, p_song_id: songId })
+      .then(function (res) {
+        if (res.error) throw res.error;
+        return res.data === true;
+      });
+  }
+
   function isRoomExpired(row) {
     return Date.now() - new Date(row.created_at).getTime() > ROOM_MAX_AGE_MS;
   }
@@ -185,6 +224,74 @@
     room.status = row.status;
     room.startAt = row.start_at;
     room.pausedAtSec = row.paused_at_sec || 0;
+    room.mode = row.mode || "host";
+    room.votes = row.votes || {};
+    room.votingOpen = !!row.voting_open;
+  }
+
+  // ---- Random mode --------------------------------------------------------
+  function pickRandomSongId(excludeId) {
+    var songs = window.CampfireChordViewer ? window.CampfireChordViewer.listSongs() : [];
+    if (!songs.length) return null;
+    var pool = songs.filter(function (s) { return s.id !== excludeId; });
+    if (!pool.length) pool = songs; // only one song total -- can't avoid a repeat
+    return pool[Math.floor(Math.random() * pool.length)].id;
+  }
+
+  function pickAndPushRandomSong() {
+    if (!room.isHost) return;
+    var nextId = pickRandomSongId(room.songId);
+    if (!nextId) return;
+    pushRoomState({
+      songId: nextId,
+      status: "playing",
+      startAt: new Date(Date.now() + START_BUFFER_MS).toISOString(),
+      pausedAtSec: 0
+    }).catch(showHostError);
+  }
+
+  // ---- Vote mode ------------------------------------------------------------
+  function startVotingRound() {
+    if (!room.isHost) return;
+    startVotingRoundRpc().catch(showHostError);
+  }
+
+  function castVote(songId) {
+    if (!room || !room.votingOpen) return;
+    castVoteRpc(songId).catch(function () {
+      window.alert("Couldn't record your vote — check your connection and try again.");
+    });
+  }
+
+  function tallyVotes(votes) {
+    var counts = {};
+    Object.keys(votes || {}).forEach(function (voterKey) {
+      var songId = votes[voterKey];
+      if (!window.CampfireChordViewer || !window.CampfireChordViewer.hasSong(songId)) return;
+      counts[songId] = (counts[songId] || 0) + 1;
+    });
+    var max = 0;
+    Object.keys(counts).forEach(function (id) { if (counts[id] > max) max = counts[id]; });
+    var topIds = Object.keys(counts).filter(function (id) { return counts[id] === max; });
+    return { counts: counts, winnerId: topIds.length ? topIds[Math.floor(Math.random() * topIds.length)] : null };
+  }
+
+  function finalizeVote() {
+    if (!room.isHost) return;
+    var tally = tallyVotes(room.votes);
+    // Nobody voted -- fall back to a random pick so the campfire never gets
+    // stuck waiting on a round nobody participated in.
+    var winnerId = tally.winnerId || pickRandomSongId(room.songId);
+    if (!winnerId) return;
+    finalizeVoteRpc(winnerId).catch(showHostError);
+  }
+
+  // ---- auto-advance when a song finishes on its own ------------------------
+  function handleSongEnded() {
+    if (!room || !room.isHost) return;
+    if (room.mode === "random") pickAndPushRandomSong();
+    else if (room.mode === "vote") startVotingRound();
+    // host mode: no automatic action -- the host picks the next song.
   }
 
   // ---- realtime channel -------------------------------------------------
@@ -264,7 +371,22 @@
   // late join, and a reconnect resync -- one code path, no special cases
   // duplicated per event type.
   function syncToRoomState() {
-    if (!window.CampfireChordViewer || !room || !room.songId) {
+    if (!window.CampfireChordViewer || !room) {
+      clearCountdown();
+      return;
+    }
+
+    // While a vote is open there's no "current song" to show -- room.songId
+    // still holds whatever last played, but showing that sheet would just
+    // cover the vote list underneath it (the same reason Host Picks needed
+    // the floating bar, except here the right fix is simply nothing open).
+    if (room.mode === "vote" && room.votingOpen) {
+      clearCountdown();
+      if (window.CampfireChordViewer.isOpen()) window.CampfireChordViewer.close();
+      return;
+    }
+
+    if (!room.songId) {
       clearCountdown();
       return;
     }
@@ -359,6 +481,11 @@
     if (els.panel) els.panel.hidden = true;
   }
 
+  function findSongById(id) {
+    if (!id || !window.CampfireChordViewer) return null;
+    return window.CampfireChordViewer.listSongs().filter(function (s) { return s.id === id; })[0] || null;
+  }
+
   function populateSongSelect() {
     if (!els.songSelect || !window.CampfireChordViewer) return;
     els.songSelect.innerHTML = "";
@@ -383,15 +510,26 @@
     if (els.panel) els.panel.hidden = false;
     if (els.roomCode) els.roomCode.textContent = room.code;
 
-    if (els.songPickerWrap) els.songPickerWrap.hidden = !room.isHost;
-    if (els.songLabelWrap) els.songLabelWrap.hidden = room.isHost;
-    if (room.isHost) {
-      populateSongSelect();
-    } else if (els.songLabel) {
-      var song = room.songId && window.CampfireChordViewer
-        ? window.CampfireChordViewer.listSongs().filter(function (s) { return s.id === room.songId; })[0]
-        : null;
-      els.songLabel.textContent = song ? song.title : "Waiting for the host to pick a song…";
+    var mode = room.mode || "host";
+    if (els.songPickerWrap) els.songPickerWrap.hidden = !(mode === "host" && room.isHost);
+    if (els.songLabelWrap) els.songLabelWrap.hidden = !(mode === "host" && !room.isHost);
+    if (els.randomDisplay) els.randomDisplay.hidden = mode !== "random";
+    if (els.votePanel) els.votePanel.hidden = mode !== "vote";
+
+    if (mode === "host") {
+      if (room.isHost) {
+        populateSongSelect();
+      } else if (els.songLabel) {
+        var song = findSongById(room.songId);
+        els.songLabel.textContent = song ? song.title : "Waiting for the host to pick a song…";
+      }
+    } else if (mode === "random") {
+      if (els.randomSongTitle) {
+        var randomSong = findSongById(room.songId);
+        els.randomSongTitle.textContent = randomSong ? randomSong.title : "Picking a song…";
+      }
+    } else if (mode === "vote") {
+      renderVotePanel();
     }
 
     if (els.readyWrap) els.readyWrap.hidden = room.isHost;
@@ -408,13 +546,64 @@
     // of this panel -- the floating bar is how the host keeps control while
     // looking at the sheet, so it mirrors the same three buttons.
     var viewerOpen = window.CampfireChordViewer && window.CampfireChordViewer.isOpen();
+    var showVoteStart = room.isHost && mode === "vote" && !room.votingOpen;
     if (els.floatBar) els.floatBar.hidden = !(room.isHost && viewerOpen);
     if (els.floatCode) els.floatCode.textContent = room.code;
     if (els.floatStart) els.floatStart.hidden = !showStart;
     if (els.floatPause) els.floatPause.hidden = !showPause;
+    if (els.floatVoteStart) els.floatVoteStart.hidden = !showVoteStart;
     if (els.floatResume) els.floatResume.hidden = !showResume;
 
     renderRoster();
+  }
+
+  function renderVotePanel() {
+    if (!room) return;
+    var open = room.votingOpen;
+    if (els.voteOpenWrap) els.voteOpenWrap.hidden = !open;
+    if (els.voteClosedWrap) els.voteClosedWrap.hidden = open;
+
+    if (open) {
+      renderVoteList();
+      if (els.voteFinalizeBtn) els.voteFinalizeBtn.hidden = !room.isHost;
+    } else {
+      if (els.voteClosedLabel) {
+        var song = findSongById(room.songId);
+        els.voteClosedLabel.textContent = song ? song.title : "Waiting for the host to open voting…";
+      }
+      if (els.voteStartBtn) els.voteStartBtn.hidden = !room.isHost;
+    }
+  }
+
+  function renderVoteList() {
+    if (!els.voteList || !window.CampfireChordViewer) return;
+    var tally = tallyVotes(room.votes);
+    var myVote = (room.votes || {})[myPresenceKey];
+    els.voteList.innerHTML = "";
+    window.CampfireChordViewer.listSongs().forEach(function (song) {
+      var li = document.createElement("li");
+      li.className = "groups-vote-row" + (myVote === song.id ? " is-voted" : "");
+
+      var title = document.createElement("span");
+      title.className = "groups-vote-row-title";
+      title.textContent = song.title;
+      li.appendChild(title);
+
+      var count = document.createElement("span");
+      var votes = tally.counts[song.id] || 0;
+      count.className = "groups-vote-row-count";
+      count.textContent = votes + (votes === 1 ? " vote" : " votes");
+      li.appendChild(count);
+
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "groups-vote-row-btn";
+      btn.textContent = myVote === song.id ? "Voted" : "Vote";
+      btn.addEventListener("click", function () { castVote(song.id); });
+      li.appendChild(btn);
+
+      els.voteList.appendChild(li);
+    });
   }
 
   // ---- flows: create / join ---------------------------------------------
@@ -430,7 +619,10 @@
       songId: row.song_id || null,
       status: row.status || "idle",
       startAt: row.start_at || null,
-      pausedAtSec: row.paused_at_sec || 0
+      pausedAtSec: row.paused_at_sec || 0,
+      mode: row.mode || "host",
+      votes: row.votes || {},
+      votingOpen: !!row.voting_open
     };
     saveSession();
     renderPanel();
@@ -438,12 +630,20 @@
     syncToRoomState();
   }
 
-  function startCampfire() {
+  function startCampfire(mode) {
     if (!isSupabaseReady()) return;
+    closeModeModal();
     var code = randomCode();
     var secret = randomToken();
-    createRoomRow(code, secret)
-      .then(function (row) { enterRoom(row, true, secret); })
+    createRoomRow(code, secret, mode)
+      .then(function (row) {
+        enterRoom(row, true, secret);
+        // The host's own client is the one authoritative source for these
+        // kickoff actions -- reusing the exact same RPCs a later Random
+        // reshuffle / Vote round already uses, not a separate path.
+        if (mode === "random") pickAndPushRandomSong();
+        else if (mode === "vote") startVotingRound();
+      })
       .catch(function () { window.alert("Couldn't start a campfire right now — check your connection and try again."); });
   }
 
@@ -483,6 +683,20 @@
     }
   }
 
+  function openModeModal() {
+    if (els.modeModal) {
+      els.modeModal.classList.add("is-open");
+      els.modeModal.setAttribute("aria-hidden", "false");
+    }
+  }
+
+  function closeModeModal() {
+    if (els.modeModal) {
+      els.modeModal.classList.remove("is-open");
+      els.modeModal.setAttribute("aria-hidden", "true");
+    }
+  }
+
   // ---- reconnect on reload ------------------------------------------------
   function tryResumeSession() {
     var saved = loadSession();
@@ -501,7 +715,10 @@
           songId: row.song_id || null,
           status: row.status || "idle",
           startAt: row.start_at || null,
-          pausedAtSec: row.paused_at_sec || 0
+          pausedAtSec: row.paused_at_sec || 0,
+          mode: row.mode || "host",
+          votes: row.votes || {},
+          votingOpen: !!row.voting_open
         };
         renderPanel();
         subscribeToRoom();
@@ -512,7 +729,7 @@
 
   // ---- wiring --------------------------------------------------------------
   function wireUi() {
-    if (els.startBtn) els.startBtn.addEventListener("click", startCampfire);
+    if (els.startBtn) els.startBtn.addEventListener("click", openModeModal);
     if (els.joinBtn) els.joinBtn.addEventListener("click", openJoinModal);
     if (els.joinModal) {
       els.joinModal.querySelectorAll("[data-close-modal]").forEach(function (btn) {
@@ -522,6 +739,19 @@
         if (e.target === els.joinModal) closeJoinModal();
       });
     }
+    if (els.modeModal) {
+      els.modeModal.querySelectorAll("[data-close-modal]").forEach(function (btn) {
+        btn.addEventListener("click", closeModeModal);
+      });
+      els.modeModal.addEventListener("mousedown", function (e) {
+        if (e.target === els.modeModal) closeModeModal();
+      });
+    }
+    els.modeCards.forEach(function (card) {
+      card.addEventListener("click", function () { startCampfire(card.dataset.mode); });
+    });
+    if (els.voteStartBtn) els.voteStartBtn.addEventListener("click", startVotingRound);
+    if (els.voteFinalizeBtn) els.voteFinalizeBtn.addEventListener("click", finalizeVote);
     if (els.joinForm) {
       els.joinForm.addEventListener("submit", function (e) {
         e.preventDefault();
@@ -548,6 +778,7 @@
     if (els.floatStart) els.floatStart.addEventListener("click", startSong);
     if (els.floatPause) els.floatPause.addEventListener("click", pauseSong);
     if (els.floatResume) els.floatResume.addEventListener("click", resumeSong);
+    if (els.floatVoteStart) els.floatVoteStart.addEventListener("click", startVotingRound);
   }
 
   function isSupabaseReady() {
@@ -568,6 +799,7 @@
       return;
     }
     wireUi();
+    if (window.CampfireChordViewer) window.CampfireChordViewer.onEnded(handleSongEnded);
     tryResumeSession();
   }
 
