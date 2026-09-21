@@ -579,7 +579,10 @@
 
     chordViewerState.timeline = buildPlaybackTimeline(entry, sectionBuilds);
     chordViewerState.activeTimelineIndex = -1;
-    applyHighlightForTime(0);
+    // Normally 0 (openChordViewer just set currentTime to 0 for a fresh
+    // open) -- highlighting for the current value instead of a hardcoded 0
+    // is what lets a Campfire Groups late-join land on the right chord.
+    applyHighlightForTime(chordViewerState.currentTime || 0);
   }
 
   function parseBeatsPerBar(timeSignature) {
@@ -676,13 +679,17 @@
     if (els.speedDisplay) els.speedDisplay.textContent = SPEED_LABELS[chordViewerState.speedIndex];
   }
 
-  function openChordViewer(id) {
+  // startElapsedSec is optional (defaults to a fresh 0 start, unchanged from
+  // before) -- Campfire Groups passes a non-zero value so a late joiner (or a
+  // resync after reconnecting) opens the sheet already positioned where the
+  // group actually is, instead of restarting the song for them.
+  function openChordViewer(id, startElapsedSec) {
     var els = chordViewerEls();
     if (!els.root) return;
     stopAutoScroll();
     chordViewerState.currentId = id;
     chordViewerState.speedIndex = DEFAULT_SPEED_INDEX;
-    chordViewerState.currentTime = 0;
+    chordViewerState.currentTime = startElapsedSec > 0 ? startElapsedSec : 0;
     updateSpeedDisplay();
     chordViewerState.lastFocused = document.activeElement;
 
@@ -691,9 +698,25 @@
     els.root.setAttribute("aria-hidden", "false");
     document.body.classList.add("chord-viewer-open");
     if (els.body) els.body.scrollTop = 0;
+    if (chordViewerState.currentTime > 0) positionScrollForActiveRow();
 
     var closeBtn = document.getElementById("chord-close");
     if (closeBtn) closeBtn.focus();
+  }
+
+  // Mirrors the scroll-follow math inside startAutoScroll()'s step() loop,
+  // kept as its own small function rather than touching that loop -- used
+  // only for placing the sheet correctly the instant it opens (e.g. a
+  // Campfire Groups late-join), never during normal playback.
+  function positionScrollForActiveRow() {
+    var els = chordViewerEls();
+    if (!els.body) return;
+    var activeRow = els.body.querySelector(".chord-row-active");
+    if (!activeRow) return;
+    var maxScroll = els.body.scrollHeight - els.body.clientHeight;
+    if (maxScroll <= 0) return;
+    var rowTopWithinBody = activeRow.getBoundingClientRect().top - els.body.getBoundingClientRect().top + els.body.scrollTop;
+    els.body.scrollTop = Math.max(0, Math.min(maxScroll, rowTopWithinBody - AUTOSCROLL_TOP_MARGIN));
   }
 
   function closeChordViewer() {
@@ -1429,6 +1452,27 @@
       }
     });
   }
+
+  // Minimal, read/control-only surface for Campfire Groups (groups.js) to
+  // drive this same engine from a shared start time instead of always 0.
+  // Deliberately exposes no chord/lyric content -- just ids/titles and the
+  // handful of calls needed to open/play/pause at a given elapsed time.
+  window.CampfireChordViewer = {
+    listSongs: function () {
+      return ALL_SONGS.map(function (s) { return { id: s.id, title: s.title }; });
+    },
+    hasSong: function (id) { return !!CHORD_DATA_BY_ID[id]; },
+    openAt: function (id, elapsedSec) { openChordViewer(id, elapsedSec || 0); },
+    play: function () { startAutoScroll(); },
+    pause: function () { stopAutoScroll(); },
+    isPlaying: function () { return !!(chordViewerState.autoScrollOn || chordViewerState.countInActive); },
+    getElapsed: function () { return chordViewerState.currentTime || 0; },
+    getCurrentSongId: function () { return chordViewerState.currentId || null; },
+    isOpen: function () {
+      var els = chordViewerEls();
+      return !!(els.root && els.root.classList.contains("is-open"));
+    }
+  };
 
   document.addEventListener("DOMContentLoaded", function () {
     renderAll();

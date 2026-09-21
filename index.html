@@ -6,7 +6,7 @@
 <title>Campfire Songs</title>
 <meta name="description" content="Songs for when the fire's low and nobody wants to go home. A campfire playlist, built for late nights, road trips, and the friends who are still up.">
 <meta name="color-scheme" content="dark">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://formspree.io https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com; manifest-src 'self'; media-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.googletagmanager.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://formspree.io https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://*.supabase.co wss://*.supabase.co; manifest-src 'self'; media-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="theme-color" content="#03050a">
 <link rel="manifest" href="manifest.json">
@@ -23,6 +23,7 @@
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="contact.css">
 <link rel="stylesheet" href="memories.css">
+<link rel="stylesheet" href="groups.css">
 </head>
 <body>
 
@@ -78,6 +79,7 @@
       <a class="btn-primary" href="#playlist">See the Playlist</a>
       <a class="btn-secondary" href="tuner.html">Tuner</a>
       <a class="btn-secondary" href="#memories">Memories</a>
+      <a class="btn-secondary" href="#groups">Groups</a>
     </div>
   </div>
   <a class="scroll-cue" href="#playlist" aria-label="Scroll to the playlist">
@@ -155,6 +157,57 @@
     </div>
 
     <div class="memories-grid" id="memories-grid" hidden></div>
+  </section>
+
+  <section class="groups-section reveal" id="groups" data-reveal>
+    <p class="section-label">gather round</p>
+    <h2 class="groups-title">Campfire Groups</h2>
+    <p class="groups-sub">Start a campfire, share the code, and play the same song together &mdash; on separate phones, in sync.</p>
+
+    <p class="groups-not-configured" id="groups-not-configured" hidden>
+      Campfire Groups isn&rsquo;t set up on this deployment yet.
+    </p>
+
+    <div class="groups-entry" id="groups-entry" hidden>
+      <button type="button" class="btn-primary" id="groups-start-btn">Start a Campfire</button>
+      <button type="button" class="btn-secondary" id="groups-join-btn">Join a Campfire</button>
+    </div>
+
+    <div class="groups-panel" id="groups-panel" hidden>
+      <p class="groups-code-label">Campfire code</p>
+      <p class="groups-code" id="groups-room-code">&mdash;</p>
+
+      <p class="groups-host-disconnected" id="groups-host-disconnected" hidden>
+        The host has disconnected &mdash; controls are unavailable until they&rsquo;re back.
+      </p>
+
+      <div class="groups-song-picker" id="groups-song-picker-wrap" hidden>
+        <label class="contact-field">
+          <span>Now playing<em>host picks</em></span>
+          <select id="groups-song-select"><option value="" disabled selected>Choose a song&hellip;</option></select>
+        </label>
+      </div>
+      <div class="groups-song-label" id="groups-song-label-wrap" hidden>
+        <p class="groups-song-label-text" id="groups-song-label">Waiting for the host to pick a song&hellip;</p>
+      </div>
+
+      <p class="groups-countdown" id="groups-countdown" hidden></p>
+
+      <div class="groups-host-controls">
+        <button type="button" class="btn-primary" id="groups-start-control" hidden>Start</button>
+        <button type="button" class="btn-secondary" id="groups-pause-control" hidden>Pause</button>
+        <button type="button" class="btn-primary" id="groups-resume-control" hidden>Resume</button>
+      </div>
+
+      <div class="groups-ready" id="groups-ready-wrap" hidden>
+        <button type="button" class="btn-secondary" id="groups-ready-toggle" aria-pressed="false">Mark as Ready</button>
+      </div>
+
+      <p class="groups-roster-label">Around the fire</p>
+      <ul class="groups-roster" id="groups-roster"></ul>
+
+      <button type="button" class="groups-leave-btn" id="groups-leave-btn">Leave campfire</button>
+    </div>
   </section>
 
 </main>
@@ -275,6 +328,31 @@
   </div>
 </div>
 
+<div class="groups-float-bar" id="groups-float-bar" hidden>
+  <span class="groups-float-code">Campfire <strong id="groups-float-code-text">&mdash;</strong></span>
+  <span class="groups-float-countdown" id="groups-float-countdown" hidden></span>
+  <button type="button" class="groups-float-btn" id="groups-float-start" hidden>Start</button>
+  <button type="button" class="groups-float-btn" id="groups-float-pause" hidden>Pause</button>
+  <button type="button" class="groups-float-btn" id="groups-float-resume" hidden>Resume</button>
+</div>
+
+<div class="site-modal" id="groups-join-modal" role="dialog" aria-modal="true" aria-label="Join a campfire" aria-hidden="true">
+  <div class="site-modal-sheet">
+    <div class="site-modal-head">
+      <h3 class="site-modal-title">Join a Campfire</h3>
+      <button type="button" class="site-modal-close" data-close-modal aria-label="Close">&times;</button>
+    </div>
+    <form class="contact-form" id="groups-join-form" novalidate>
+      <label class="contact-field">
+        <span>Campfire code<em>required</em></span>
+        <input type="text" id="groups-join-code" maxlength="8" autocapitalize="characters" autocomplete="off" placeholder="e.g. F7K2Q" required>
+      </label>
+      <p class="contact-form-notice" id="groups-join-notice" hidden></p>
+      <button type="submit" class="contact-submit">Join</button>
+    </form>
+  </div>
+</div>
+
 <div class="chord-viewer" id="chord-viewer" role="dialog" aria-modal="true" aria-label="Chord viewer" aria-hidden="true">
   <div class="chord-embers" id="chord-embers" aria-hidden="true"></div>
   <div class="chord-sheet" id="chord-sheet">
@@ -312,6 +390,8 @@
 <script src="script.js"></script>
 <script src="contact.js"></script>
 <script src="memories.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="groups.js"></script>
 <script src="pwa.js"></script>
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-WF4NH3TRKP"></script>
 <script src="analytics.js"></script>
