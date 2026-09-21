@@ -6,8 +6,8 @@
   // The anon key is meant to be public (same trust model as any Supabase
   // static-site setup) -- real protection is the RLS + RPC in schema.sql,
   // not secrecy of this key.
-  var SUPABASE_URL = "YOUR_SUPABASE_URL";
-  var SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+  var SUPABASE_URL = "https://gvsvobehytjgidclilwa.supabase.co";
+  var SUPABASE_ANON_KEY = "sb_publishable_CudMVeTx70qoNujEcYmb1Q_ZHVA0w4x";
   var SUPABASE_CONFIGURED =
     SUPABASE_URL.indexOf("YOUR_SUPABASE") === -1 &&
     SUPABASE_ANON_KEY.indexOf("YOUR_SUPABASE") === -1;
