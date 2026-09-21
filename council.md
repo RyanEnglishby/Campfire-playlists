@@ -25,3 +25,8 @@ Key claim: Every dollar figure in this analysis is fiction until a real Stripe P
 Agent: Believer
 Position: The hard part — hands-free, beat-accurate auto-scroll — is already built and working, which turns this from a feasibility bet into a content-and-distribution bet.
 Key claim: The chord/lyric auto-scroll engine (musical-time-driven via playAlongBpm × beats, never estimated scroll speed) and a real-time autocorrelation pitch-detection tuner both went from zero to working across 20 songs in two days per this repo's own git log (2026-09-18 to 2026-09-20) — meaning the single biggest technical risk in the idea is retired, checkable code, not a roadmap promise.
+
+## [2026-09-21] — Campfire Songs
+Agent: Judge
+Position: The validated core (tuner + chords + auto-scroll) is good enough for strangers; the unvalidated new core (Groups multiplayer) is not — fix the offline-caching gap and add a privacy notice, then run one real non-friend multiplayer test before building anything else.
+Key claim: Every Groups/Supabase commit (MVP, real project connection, Random/Vote/Host-Picks modes) is dated 2026-09-21 per git log — same day as this review — so the flagship new feature has zero recorded human testing beyond today, and sw.js's PRECACHE_URLS still omits groups.js, groups.css, memories.js, and memories.css, meaning the app has no offline fallback for its newest features in exactly the low-signal campsite conditions it's built for.
