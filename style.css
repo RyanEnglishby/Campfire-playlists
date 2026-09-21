@@ -7,12 +7,19 @@
 
   --cream: #f3e9d8;
   --cream-dim: #c9b8a0;
-  --cream-faint: #8d7d6c;
+  --cream-faint: #a89686;
 
   --ember: #ff7a3d;
   --ember-deep: #e2601f;
   --amber: #e3a25c;
   --gold: #caa257;
+
+  /* darker variants of ember/amber for text sitting on the light --paper
+     surfaces (chord sheet, panels, cards) -- the bright versions above are
+     tuned for the dark background and don't have enough contrast on paper */
+  --ember-ink: #8f3d10;
+  --ember-ink-active: #a33712;
+  --amber-ink: #714a1c;
 
   --paper: #e9ddc3;
   --ink: #2a1c12;
@@ -1087,10 +1094,10 @@ body.chord-viewer-open { overflow: hidden; }
 }
 .chord-sheet-eyebrow {
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: 11.5px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--ember-deep);
+  color: var(--ember-ink);
   margin: 0 0 6px;
 }
 .chord-title {
@@ -1111,7 +1118,7 @@ body.chord-viewer-open { overflow: hidden; }
 .chord-badges { display: flex; flex-wrap: wrap; gap: 7px; }
 .chord-badge {
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: 11px;
   letter-spacing: 0.02em;
   color: #5a4530;
   border: 1px solid rgba(60, 40, 20, 0.25);
@@ -1144,10 +1151,10 @@ body.chord-viewer-open { overflow: hidden; }
 .chord-strum-item { display: flex; align-items: baseline; gap: 8px; }
 .chord-strum-label {
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: 11.5px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--ember-deep);
+  color: var(--ember-ink);
 }
 .chord-strum-pattern {
   font-family: var(--font-mono);
@@ -1174,7 +1181,7 @@ body.chord-viewer-open { overflow: hidden; }
   font-family: var(--font-display);
   font-weight: 700;
   font-size: 110px;
-  color: var(--ember);
+  color: var(--ember-ink-active);
   text-shadow: 0 0 50px rgba(255, 122, 61, 0.55);
   background: rgba(233, 221, 195, 0.55);
   opacity: 0;
@@ -1187,18 +1194,18 @@ body.chord-viewer-open { overflow: hidden; }
 .chord-section-name {
   font-family: var(--font-hand);
   font-size: 26px;
-  color: var(--ember-deep);
+  color: var(--ember-ink);
   border-bottom: 1px solid rgba(60, 40, 20, 0.15);
   padding-bottom: 8px;
   margin: 0 0 16px;
   transition: color 0.35s ease;
 }
-.chord-section-name.chord-section-active { color: var(--ember); }
+.chord-section-name.chord-section-active { color: var(--ember-ink-active); }
 .chord-section-repeat {
   font-family: var(--font-mono);
   font-size: 11px;
   letter-spacing: 0.04em;
-  color: #8a6a3f;
+  color: #6b5230;
   margin-left: 10px;
 }
 
@@ -1215,7 +1222,7 @@ body.chord-viewer-open { overflow: hidden; }
   font-family: var(--font-mono);
   font-weight: 700;
   font-size: 22px;
-  color: var(--ember-deep);
+  color: var(--ember-ink);
   transition: color 0.35s ease, text-shadow 0.35s ease;
 }
 .chord-prog-strum {
@@ -1248,21 +1255,21 @@ body.chord-viewer-open { overflow: hidden; }
   font-family: var(--font-mono);
   font-weight: 700;
   font-size: 15px;
-  color: var(--ember-deep);
+  color: var(--ember-ink);
   transition: color 0.35s ease, text-shadow 0.35s ease;
 }
 
 .chord-row-active { background-color: rgba(255, 122, 61, 0.07); box-shadow: 0 0 0 10px rgba(255, 122, 61, 0.07); }
 .chord-row-active .chord-prog-chord,
 .chord-row-active .chord-chunk-chord {
-  color: var(--ember);
+  color: var(--ember-ink-active);
   text-shadow: 0 0 12px rgba(255, 122, 61, 0.5);
 }
 
 .chord-pending {
   font-size: 13.5px;
   font-style: italic;
-  color: #8a7355;
+  color: #5a4530;
   margin: 4px 0 0;
 }
 
@@ -1282,7 +1289,7 @@ body.chord-viewer-open { overflow: hidden; }
   font-size: 14px;
   font-weight: 700;
   letter-spacing: 0.02em;
-  color: #fff6ea;
+  color: var(--ground-deep);
   background: var(--ember-deep);
   border: none;
   border-radius: 999px;
@@ -1292,7 +1299,7 @@ body.chord-viewer-open { overflow: hidden; }
   transition: background 0.2s ease, transform 0.15s ease;
 }
 .chord-play-btn:hover { background: var(--ember); }
-.chord-play-btn[aria-pressed="true"] { background: #6b5636; }
+.chord-play-btn[aria-pressed="true"] { background: #6b5636; color: #fff6ea; }
 .chord-speed-group { display: flex; align-items: center; gap: 8px; }
 .chord-speed-display { font-family: var(--font-mono); font-size: 12px; color: #5a4530; min-width: 32px; text-align: center; }
 
