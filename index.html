@@ -191,6 +191,25 @@
         <p class="groups-song-label-text" id="groups-song-label">Waiting for the host to pick a song&hellip;</p>
       </div>
 
+      <div class="groups-random-display" id="groups-random-display" hidden>
+        <p class="groups-random-tag">🎲 Randomly selected</p>
+        <p class="groups-random-song" id="groups-random-song-title">&mdash;</p>
+      </div>
+
+      <div class="groups-vote-panel" id="groups-vote-panel" hidden>
+        <div class="groups-vote-open" id="groups-vote-open-wrap" hidden>
+          <div class="groups-vote-header">
+            <p class="groups-vote-title">🗳️ Vote for the next song</p>
+            <button type="button" class="btn-primary groups-vote-finalize" id="groups-vote-finalize-btn" hidden>Finalize Vote</button>
+          </div>
+          <ul class="groups-vote-list" id="groups-vote-list"></ul>
+        </div>
+        <div class="groups-vote-closed" id="groups-vote-closed-wrap" hidden>
+          <p class="groups-vote-closed-label" id="groups-vote-closed-label">&mdash;</p>
+          <button type="button" class="btn-secondary" id="groups-vote-start-btn" hidden>Start Voting</button>
+        </div>
+      </div>
+
       <p class="groups-countdown" id="groups-countdown" hidden></p>
 
       <div class="groups-host-controls">
@@ -334,6 +353,7 @@
   <button type="button" class="groups-float-btn" id="groups-float-start" hidden>Start</button>
   <button type="button" class="groups-float-btn" id="groups-float-pause" hidden>Pause</button>
   <button type="button" class="groups-float-btn" id="groups-float-resume" hidden>Resume</button>
+  <button type="button" class="groups-float-btn" id="groups-float-vote-start" hidden>Start Voting</button>
 </div>
 
 <div class="site-modal" id="groups-join-modal" role="dialog" aria-modal="true" aria-label="Join a campfire" aria-hidden="true">
@@ -350,6 +370,32 @@
       <p class="contact-form-notice" id="groups-join-notice" hidden></p>
       <button type="submit" class="contact-submit">Join</button>
     </form>
+  </div>
+</div>
+
+<div class="site-modal" id="groups-mode-modal" role="dialog" aria-modal="true" aria-label="How should songs be chosen?" aria-hidden="true">
+  <div class="site-modal-sheet">
+    <div class="site-modal-head">
+      <h3 class="site-modal-title">How should songs be chosen?</h3>
+      <button type="button" class="site-modal-close" data-close-modal aria-label="Close">&times;</button>
+    </div>
+    <div class="groups-mode-options">
+      <button type="button" class="groups-mode-card" id="groups-mode-random" data-mode="random">
+        <span class="groups-mode-icon">🎲</span>
+        <span class="groups-mode-name">Random</span>
+        <span class="groups-mode-desc">We shuffle through the whole campfire songbook automatically.</span>
+      </button>
+      <button type="button" class="groups-mode-card" id="groups-mode-vote" data-mode="vote">
+        <span class="groups-mode-icon">🗳️</span>
+        <span class="groups-mode-name">Vote</span>
+        <span class="groups-mode-desc">Everyone votes on what plays next.</span>
+      </button>
+      <button type="button" class="groups-mode-card" id="groups-mode-host" data-mode="host">
+        <span class="groups-mode-icon">🎤</span>
+        <span class="groups-mode-name">Host Picks</span>
+        <span class="groups-mode-desc">You choose every song yourself.</span>
+      </button>
+    </div>
   </div>
 </div>
 
