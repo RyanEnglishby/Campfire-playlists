@@ -74,7 +74,7 @@ security definer
 set search_path = public
 as $$
 declare
-  matched boolean := false;
+  affected_rows integer;
 begin
   update campfire_rooms
   set song_id = p_song_id,
@@ -83,8 +83,8 @@ begin
       paused_at_sec = p_paused_at_sec
   where code = p_code and host_secret = p_secret;
 
-  get diagnostics matched = row_count;
-  return matched > 0;
+  get diagnostics affected_rows = row_count;
+  return affected_rows > 0;
 end;
 $$;
 
@@ -102,15 +102,15 @@ security definer
 set search_path = public
 as $$
 declare
-  matched boolean := false;
+  affected_rows integer;
 begin
   update campfire_rooms
   set voting_open = true,
       votes = '{}'::jsonb
   where code = p_code and host_secret = p_secret;
 
-  get diagnostics matched = row_count;
-  return matched > 0;
+  get diagnostics affected_rows = row_count;
+  return affected_rows > 0;
 end;
 $$;
 
@@ -130,7 +130,7 @@ security definer
 set search_path = public
 as $$
 declare
-  matched boolean := false;
+  affected_rows integer;
 begin
   update campfire_rooms
   set song_id = p_song_id,
@@ -141,8 +141,8 @@ begin
       votes = '{}'::jsonb
   where code = p_code and host_secret = p_secret;
 
-  get diagnostics matched = row_count;
-  return matched > 0;
+  get diagnostics affected_rows = row_count;
+  return affected_rows > 0;
 end;
 $$;
 
@@ -162,14 +162,14 @@ security definer
 set search_path = public
 as $$
 declare
-  matched boolean := false;
+  affected_rows integer;
 begin
   update campfire_rooms
   set votes = jsonb_set(votes, array[p_voter_key], to_jsonb(p_song_id), true)
   where code = p_code and voting_open = true;
 
-  get diagnostics matched = row_count;
-  return matched > 0;
+  get diagnostics affected_rows = row_count;
+  return affected_rows > 0;
 end;
 $$;
 
