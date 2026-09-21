@@ -6,6 +6,10 @@
   var IMAGE_QUALITY = 0.72;
 
   var els = {};
+  // Two separate file inputs (camera-forcing vs. a plain picker) can't both
+  // be "the" source of truth the way one input's .files was -- whichever
+  // one last produced a file wins, tracked here instead.
+  var selectedPhotoFile = null;
 
   function $(id) { return document.getElementById(id); }
 
@@ -17,7 +21,10 @@
     els.modal = $("add-memory-modal");
     els.form = $("add-memory-form");
     els.notice = $("memory-form-notice");
-    els.photoInput = $("memory-photo");
+    els.photoCameraBtn = $("memory-photo-camera-btn");
+    els.photoGalleryBtn = $("memory-photo-gallery-btn");
+    els.photoCameraInput = $("memory-photo-camera-input");
+    els.photoGalleryInput = $("memory-photo-gallery-input");
     els.photoPreviewWrap = $("memory-photo-preview");
     els.photoPreviewImg = $("memory-photo-preview-img");
     els.songSelect = $("memory-song");
@@ -214,6 +221,7 @@
 
   function resetForm() {
     els.form.reset();
+    selectedPhotoFile = null;
     setNotice("");
     els.photoPreviewWrap.hidden = true;
     els.photoPreviewImg.src = "";
@@ -234,21 +242,30 @@
       if (e.key === "Escape" && els.modal.classList.contains("is-open")) closeModal();
     });
 
-    els.photoInput.addEventListener("change", function () {
-      var file = els.photoInput.files && els.photoInput.files[0];
-      if (!file) { els.photoPreviewWrap.hidden = true; return; }
+    // Two explicit actions instead of one input relying on `capture` to
+    // decide -- "Take Photo" forces the camera, "Choose from Camera Roll"
+    // opens the normal picker. Both feed the same preview/selection state.
+    els.photoCameraBtn.addEventListener("click", function () { els.photoCameraInput.click(); });
+    els.photoGalleryBtn.addEventListener("click", function () { els.photoGalleryInput.click(); });
+
+    function handlePhotoPicked(input) {
+      var file = input.files && input.files[0];
+      if (!file) return;
+      selectedPhotoFile = file;
       var reader = new FileReader();
       reader.onload = function (e) {
         els.photoPreviewImg.src = e.target.result;
         els.photoPreviewWrap.hidden = false;
       };
       reader.readAsDataURL(file);
-    });
+    }
+    els.photoCameraInput.addEventListener("change", function () { handlePhotoPicked(els.photoCameraInput); });
+    els.photoGalleryInput.addEventListener("change", function () { handlePhotoPicked(els.photoGalleryInput); });
 
     els.form.addEventListener("submit", function (e) {
       e.preventDefault();
 
-      var file = els.photoInput.files && els.photoInput.files[0];
+      var file = selectedPhotoFile;
       var songTitle = els.songSelect.value;
       if (!file) { setNotice("Choose a photo first."); return; }
       if (!songTitle) { setNotice("Choose which song this memory goes with."); return; }
