@@ -4,8 +4,15 @@
   // TODO(site owner): put the real inbox that should receive these here.
   // Until this contains an "@", the forms will say so instead of silently
   // trying to send anywhere.
-  var CONTACT_EMAIL = "REPLACE-WITH-YOUR-EMAIL";
+  var CONTACT_EMAIL = "CampChord@gmail.com";
   var EMAIL_CONFIGURED = CONTACT_EMAIL.indexOf("@") !== -1;
+
+  // Optional: a Formspree form endpoint (https://formspree.io) makes Submit
+  // send immediately with no email app involved. Until this is set, forms
+  // fall back to the mailto behavior above -- both are always honest about
+  // which one actually happened.
+  var FORMSPREE_ENDPOINT = "https://formspree.io/f/meaoaggv";
+  var FORMSPREE_CONFIGURED = FORMSPREE_ENDPOINT.indexOf("REPLACE-WITH-YOUR-FORM-ID") === -1;
 
   var NOT_CONFIGURED_MSG = "This form isn't connected to an email address yet, so nothing can send. (Site owner: set CONTACT_EMAIL in contact.js.)";
 
@@ -29,6 +36,62 @@
 
   function buildMailto(subject, body) {
     return "mailto:" + CONTACT_EMAIL + "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
+  }
+
+  // Formspree when configured (submits immediately, no email app); otherwise
+  // falls back to the existing mailto behavior. Every path ends by telling
+  // the visitor exactly what actually happened.
+  // analyticsEvent is optional: when given, it's reported (with no
+  // parameters -- just the bare fact) at the exact points below where a
+  // message has actually been dispatched, however it got sent. Guarded so
+  // this works identically whether or not analytics.js is present.
+  function notifyAnalytics(analyticsEvent) {
+    if (analyticsEvent && typeof window.__campfireTrack === "function") window.__campfireTrack(analyticsEvent);
+  }
+
+  function submitViaFormspreeOrMailto(form, subject, body, replyToEmail, analyticsEvent) {
+    if (FORMSPREE_CONFIGURED) {
+      var submitBtn = form.querySelector('button[type="submit"]');
+      if (submitBtn) submitBtn.disabled = true;
+      setNotice(form, "Sending…");
+
+      var payload = { _subject: subject, message: body };
+      if (replyToEmail) payload._replyto = replyToEmail;
+
+      fetch(FORMSPREE_ENDPOINT, {
+        method: "POST",
+        headers: { "Accept": "application/json", "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      }).then(function (res) {
+        if (submitBtn) submitBtn.disabled = false;
+        if (res.ok) {
+          form.reset();
+          setNotice(form, "Sent — thanks! We'll get back to you if you left an email.");
+          notifyAnalytics(analyticsEvent);
+        } else if (EMAIL_CONFIGURED) {
+          setNotice(form, "Couldn't send that directly, so opening your email app instead…");
+          window.location.href = buildMailto(subject, body);
+          notifyAnalytics(analyticsEvent);
+        } else {
+          setNotice(form, "Couldn't send that directly, and no email fallback is configured either.");
+        }
+      }).catch(function () {
+        if (submitBtn) submitBtn.disabled = false;
+        if (EMAIL_CONFIGURED) {
+          setNotice(form, "Couldn't reach the server, so opening your email app instead…");
+          window.location.href = buildMailto(subject, body);
+          notifyAnalytics(analyticsEvent);
+        } else {
+          setNotice(form, "Couldn't reach the server, and no email fallback is configured either.");
+        }
+      });
+    } else if (EMAIL_CONFIGURED) {
+      window.location.href = buildMailto(subject, body);
+      setNotice(form, "Opening your email app with these details filled in…");
+      notifyAnalytics(analyticsEvent);
+    } else {
+      setNotice(form, NOT_CONFIGURED_MSG);
+    }
   }
 
   function setNotice(form, message) {
@@ -100,8 +163,7 @@
         note || "(none)"
       ].join("\n");
 
-      window.location.href = buildMailto(subject, body);
-      setNotice(form, "Opening your email app with these details filled in…");
+      submitViaFormspreeOrMailto(form, subject, body, email, "song_request_submitted");
     });
   }
 
@@ -146,8 +208,7 @@
         "User agent: " + navigator.userAgent
       ].join("\n");
 
-      window.location.href = buildMailto(subject, body);
-      setNotice(form, "Opening your email app with these details filled in…");
+      submitViaFormspreeOrMailto(form, subject, body, email, "bug_report_submitted");
     });
   }
 

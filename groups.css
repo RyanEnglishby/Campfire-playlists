@@ -1,0 +1,393 @@
+/* ---------- campfire groups ---------- */
+.groups-section {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 20px 20px 100px;
+  text-align: center;
+}
+
+.groups-title {
+  font-family: var(--font-hand);
+  font-size: clamp(40px, 7vw, 58px);
+  color: var(--amber);
+  margin: 4px 0 10px;
+  transform: rotate(1deg);
+  text-shadow: 0.4px 0.5px 0 rgba(0, 0, 0, 0.15);
+}
+
+.groups-sub {
+  font-family: var(--font-body);
+  font-style: italic;
+  color: var(--cream-dim);
+  font-size: 15px;
+  max-width: 44ch;
+  margin: 0 auto 28px;
+}
+
+.groups-not-configured {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--cream-faint);
+  border: 1px dashed rgba(230, 180, 120, 0.3);
+  border-radius: 6px;
+  padding: 14px 18px;
+}
+
+.groups-entry {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  justify-content: center;
+}
+
+/* ---------- room panel ---------- */
+.groups-panel {
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E"),
+    var(--paper);
+  border-radius: 8px;
+  padding: 28px 24px 26px;
+  box-shadow: 0 20px 44px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.3);
+  transform: rotate(-0.4deg);
+}
+
+.groups-code-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ember-deep);
+  margin: 0 0 6px;
+}
+
+.groups-code {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: clamp(36px, 9vw, 52px);
+  letter-spacing: 0.18em;
+  color: var(--ink);
+  margin: 0 0 22px;
+  text-shadow: 0 0 18px rgba(255, 140, 65, 0.35);
+}
+
+.groups-host-disconnected {
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  color: #8a3b1f;
+  background: rgba(200, 90, 40, 0.12);
+  border: 1px solid rgba(200, 90, 40, 0.3);
+  border-radius: 6px;
+  padding: 10px 14px;
+  margin: 0 0 20px;
+}
+
+.groups-song-picker,
+.groups-song-label {
+  margin: 0 0 20px;
+  text-align: left;
+}
+
+.groups-song-label-text {
+  font-family: var(--font-hand);
+  font-size: 22px;
+  color: var(--ink);
+  margin: 0;
+  text-align: center;
+}
+
+.groups-countdown {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  letter-spacing: 0.04em;
+  color: var(--ember-deep);
+  margin: 0 0 18px;
+}
+
+.groups-host-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  margin: 0 0 18px;
+}
+
+.groups-ready {
+  margin: 0 0 22px;
+}
+
+.groups-roster-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #8a7355;
+  margin: 0 0 10px;
+  text-align: left;
+}
+
+.groups-roster {
+  list-style: none;
+  margin: 0 0 24px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.groups-roster-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.06);
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.groups-roster-ready {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #8a7355;
+}
+
+.groups-roster-ready.is-ready {
+  color: #3f7d3a;
+  font-weight: 600;
+}
+
+.groups-leave-btn {
+  background: none;
+  border: none;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: #8a7355;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 4px;
+}
+
+/* ---------- floating host controls ----------
+   The chord viewer is a full-screen modal (z-index 60) that covers the
+   Groups panel underneath it -- this bar floats above it (z-index 70) so
+   the host can still Start/Pause/Resume while everyone (including the
+   host) is looking at the actual chord sheet, without touching the
+   chord-viewer's own markup or engine. */
+.groups-float-bar {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(10, 8, 6, 0.92);
+  border: 1px solid rgba(230, 180, 120, 0.3);
+  border-radius: 999px;
+  padding: 8px 10px 8px 16px;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.5);
+  max-width: calc(100vw - 24px);
+}
+
+.groups-float-code {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--cream-faint);
+  white-space: nowrap;
+}
+.groups-float-code strong { color: var(--amber); letter-spacing: 0.12em; }
+
+.groups-float-countdown {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ember-deep);
+  white-space: nowrap;
+}
+
+.groups-float-btn {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.03em;
+  color: var(--ink);
+  background: var(--amber);
+  border: none;
+  border-radius: 999px;
+  padding: 6px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.groups-float-btn:hover { filter: brightness(1.08); }
+
+/* ---------- mode selection (Start a Campfire) ---------- */
+.groups-mode-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.groups-mode-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-align: left;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(230, 180, 120, 0.25);
+  border-radius: 8px;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+  font-family: var(--font-body);
+}
+.groups-mode-card:hover,
+.groups-mode-card:focus-visible {
+  background: rgba(255, 140, 65, 0.1);
+  border-color: rgba(255, 140, 65, 0.5);
+  transform: translateY(-1px);
+}
+
+.groups-mode-icon { font-size: 26px; line-height: 1; flex-shrink: 0; }
+
+.groups-mode-name {
+  display: block;
+  font-family: var(--font-hand);
+  font-size: 20px;
+  color: var(--amber);
+}
+
+.groups-mode-desc {
+  display: block;
+  font-size: 13px;
+  color: var(--cream-dim);
+  line-height: 1.4;
+  margin-top: 2px;
+}
+
+/* ---------- random mode ---------- */
+.groups-random-display {
+  margin: 0 0 20px;
+  padding: 16px;
+  background: rgba(255, 140, 65, 0.08);
+  border: 1px dashed rgba(255, 140, 65, 0.35);
+  border-radius: 8px;
+}
+.groups-random-tag {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ember-deep);
+  margin: 0 0 6px;
+}
+.groups-random-song {
+  font-family: var(--font-hand);
+  font-size: 24px;
+  color: var(--ink);
+  margin: 0;
+}
+
+/* ---------- vote mode ---------- */
+.groups-vote-panel { margin: 0 0 20px; text-align: left; }
+
+.groups-vote-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 0 12px;
+}
+.groups-vote-title {
+  font-family: var(--font-hand);
+  font-size: 20px;
+  color: var(--ink);
+  margin: 0;
+}
+.groups-vote-finalize { flex-shrink: 0; }
+
+.groups-vote-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 320px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.groups-vote-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.06);
+}
+.groups-vote-row.is-voted { background: rgba(255, 140, 65, 0.16); }
+
+.groups-vote-row-title {
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--ink);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.groups-vote-row-count {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #8a7355;
+  flex-shrink: 0;
+  min-width: 3.5em;
+  text-align: right;
+}
+
+.groups-vote-row-btn {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.35);
+  border: none;
+  border-radius: 999px;
+  padding: 5px 12px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.groups-vote-row.is-voted .groups-vote-row-btn {
+  background: var(--amber);
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.groups-vote-closed-label {
+  font-family: var(--font-hand);
+  font-size: 22px;
+  color: var(--ink);
+  text-align: center;
+  margin: 0 0 14px;
+}
+.groups-vote-closed { text-align: center; }
+
+@media (max-width: 640px) {
+  .groups-section { padding: 10px 16px 80px; }
+  .groups-panel { padding: 22px 18px 20px; }
+  .groups-float-bar { flex-wrap: wrap; justify-content: center; padding: 8px 12px; top: 8px; }
+  .groups-float-code { display: none; }
+  .groups-vote-list { max-height: 260px; }
+  .groups-vote-row-title { white-space: normal; }
+  .groups-vote-header { flex-wrap: wrap; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .groups-panel { transition: none !important; }
+}

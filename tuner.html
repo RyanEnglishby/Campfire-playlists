@@ -6,6 +6,16 @@
 <title>Tuner &mdash; Campfire Songs</title>
 <meta name="description" content="A simple chromatic guitar tuner for the campfire. Listens through your microphone and processes everything locally in your browser.">
 <meta name="color-scheme" content="dark">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com; manifest-src 'self'; media-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="theme-color" content="#03050a">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Campfire">
 <style>html,body{background:#03050a;margin:0}</style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -69,5 +79,8 @@
 </div>
 
 <script src="tuner.js"></script>
+<script src="pwa.js"></script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-WF4NH3TRKP"></script>
+<script src="analytics.js"></script>
 </body>
 </html>
