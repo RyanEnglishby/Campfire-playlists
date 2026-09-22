@@ -6,7 +6,7 @@
 <title>Campfire Songs</title>
 <meta name="description" content="Songs for when the fire's low and nobody wants to go home. A campfire playlist, built for late nights, road trips, and the friends who are still up.">
 <meta name="color-scheme" content="dark">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.googletagmanager.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://formspree.io https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://*.supabase.co wss://*.supabase.co; manifest-src 'self'; media-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.googletagmanager.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://coverartarchive.org https://*.archive.org https://*.mzstatic.com; connect-src 'self' https://formspree.io https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://*.supabase.co wss://*.supabase.co https://musicbrainz.org https://itunes.apple.com; manifest-src 'self'; media-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="theme-color" content="#03050a">
 <link rel="manifest" href="manifest.json">
@@ -236,6 +236,7 @@
   <p class="closing-sub reveal" data-reveal>One more before we head in.</p>
   <div class="featured-card finale reveal" id="finale-card" data-reveal></div>
   <p class="closing-credit">Campfire Songs &mdash; a playlist, not a product.</p>
+  <p class="artwork-credit">Album art via the <a href="https://coverartarchive.org/" target="_blank" rel="noopener noreferrer">Cover Art Archive</a> and the <a href="https://developer.apple.com/library/archive/documentation/AudioVideo/Conceptual/iTuneSearchAPI/index.html" target="_blank" rel="noopener noreferrer">iTunes Search API</a>.</p>
   <p class="contact-links">
     <button type="button" class="contact-link" id="open-request-song">Request a Song</button>
     <span class="contact-sep" aria-hidden="true">&middot;</span>
@@ -414,11 +415,18 @@
   <div class="chord-embers" id="chord-embers" aria-hidden="true"></div>
   <div class="chord-sheet" id="chord-sheet">
     <div class="chord-sheet-head">
-      <div>
-        <p class="chord-sheet-eyebrow">chord sheet</p>
-        <h3 class="chord-title" id="chord-title"></h3>
-        <p class="chord-meta" id="chord-meta"></p>
-        <div class="chord-badges" id="chord-badges"></div>
+      <div class="chord-sheet-head-main">
+        <div class="chord-artwork" id="chord-artwork" aria-hidden="true">
+          <span class="chord-artwork-fallback" id="chord-artwork-fallback"></span>
+          <img class="chord-artwork-img" id="chord-artwork-img" alt="" loading="lazy" decoding="async">
+        </div>
+        <div>
+          <p class="chord-sheet-eyebrow">chord sheet</p>
+          <h3 class="chord-title" id="chord-title"></h3>
+          <p class="chord-meta" id="chord-meta"></p>
+          <div class="chord-badges" id="chord-badges"></div>
+          <a class="chord-artwork-credit" id="chord-artwork-credit" target="_blank" rel="noopener noreferrer" hidden>artwork via Apple Music &#8599;</a>
+        </div>
       </div>
       <button type="button" class="chord-close" id="chord-close" aria-label="Close chord viewer">&times;</button>
     </div>
@@ -444,6 +452,7 @@
   </div>
 </div>
 
+<script src="artwork.js"></script>
 <script src="script.js"></script>
 <script src="contact.js"></script>
 <script src="memories.js"></script>

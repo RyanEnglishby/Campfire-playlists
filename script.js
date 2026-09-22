@@ -29,6 +29,56 @@
     return (((h % 200) - 100) / 100 * range).toFixed(2);
   }
 
+  // The colored-gradient-plus-initial "sleeve" look is the permanent design
+  // for a song whose real artwork can't be found, and the placeholder shown
+  // the instant a card renders while real artwork is still being looked up.
+  function paintArtworkFallback(el, song) {
+    var palette = paletteFor(song.title);
+    el.style.setProperty("--hue-a", palette[0]);
+    el.style.setProperty("--hue-b", palette[1]);
+    el.textContent = song.title.charAt(0);
+  }
+
+  // Builds a square artwork slot: the fallback sleeve shows immediately,
+  // and CampfireArtwork.watch() lazily looks up real artwork and crossfades
+  // an <img> on top of it if/when one is found -- the fallback never goes
+  // away, it just ends up covered. `linkable` (used for the track-list
+  // thumbnails) makes the slot clickable through to the artwork's source
+  // page once one resolves, satisfying the iTunes Search API's requirement
+  // that its artwork stay next to a direct link back to the store listing.
+  function buildArtworkSlot(song, className, linkable) {
+    var slot = document.createElement(linkable ? "button" : "div");
+    slot.className = className;
+    if (linkable) { slot.type = "button"; slot.setAttribute("aria-hidden", "true"); slot.tabIndex = -1; }
+
+    var fallback = document.createElement("span");
+    fallback.className = className + "-fallback";
+    paintArtworkFallback(fallback, song);
+
+    var img = document.createElement("img");
+    img.className = className + "-img";
+    img.alt = "";
+    img.loading = "lazy";
+    img.decoding = "async";
+
+    slot.appendChild(fallback);
+    slot.appendChild(img);
+
+    window.CampfireArtwork && window.CampfireArtwork.watch(img, fallback, song, function (entry) {
+      if (linkable && entry.viewUrl) {
+        slot.removeAttribute("aria-hidden");
+        slot.tabIndex = 0;
+        slot.title = "Open " + song.title + " in Apple Music";
+        slot.addEventListener("click", function (e) {
+          e.stopPropagation();
+          window.open(entry.viewUrl, "_blank", "noopener,noreferrer");
+        });
+      }
+    });
+
+    return slot;
+  }
+
   var FEATURED = {
     title: "Something in the Orange",
     artist: "Zach Bryan",
@@ -441,6 +491,9 @@
       body: document.getElementById("chord-sheet-body"),
       title: document.getElementById("chord-title"),
       meta: document.getElementById("chord-meta"),
+      artwork: document.getElementById("chord-artwork-img"),
+      artworkFallback: document.getElementById("chord-artwork-fallback"),
+      artworkCredit: document.getElementById("chord-artwork-credit"),
       badges: document.getElementById("chord-badges"),
       strumRow: document.getElementById("chord-strum-row"),
       sections: document.getElementById("chord-sections"),
@@ -513,6 +566,16 @@
 
     els.title.textContent = entry.title;
     els.meta.textContent = entry.artist + " · " + entry.year;
+    if (els.artwork && els.artworkFallback) {
+      paintArtworkFallback(els.artworkFallback, entry);
+      if (els.artworkCredit) els.artworkCredit.hidden = true;
+      window.CampfireArtwork && window.CampfireArtwork.watch(els.artwork, els.artworkFallback, entry, function (result) {
+        if (els.artworkCredit && result.viewUrl) {
+          els.artworkCredit.href = result.viewUrl;
+          els.artworkCredit.hidden = false;
+        }
+      });
+    }
 
     els.badges.innerHTML = "";
     addBadge(els.badges, entry.difficulty);
@@ -976,6 +1039,8 @@
     track.style.setProperty("--reveal-delay", Math.min(index * 45, 360) + "ms");
     track.style.setProperty("--row-pad", (14 + (hashString(song.title) % 7)) + "px");
 
+    var thumb = buildArtworkSlot(song, "track-thumb", true);
+
     var num = document.createElement("span");
     num.className = "track-num" + (song.pick ? " is-pick" : "");
     if (song.pick) {
@@ -1030,6 +1095,7 @@
     actions.appendChild(chordsBtn);
     actions.appendChild(listen);
 
+    track.appendChild(thumb);
     track.appendChild(num);
     track.appendChild(main);
     track.appendChild(actions);
@@ -1070,6 +1136,30 @@
     photoLetter.textContent = song.title.charAt(0);
     photo.appendChild(photoLetter);
 
+    var photoImg = document.createElement("img");
+    photoImg.className = "polaroid-photo-img";
+    photoImg.alt = "";
+    photoImg.loading = "lazy";
+    photoImg.decoding = "async";
+    photo.appendChild(photoImg);
+
+    // Only appears when artwork came from the iTunes Search API fallback
+    // (Cover Art Archive results carry no viewUrl) -- satisfies its terms
+    // requiring the artwork stay next to a direct link to the store page.
+    var appleMusicLink = document.createElement("a");
+    appleMusicLink.className = "listen-link big apple-music-link";
+    appleMusicLink.target = "_blank";
+    appleMusicLink.rel = "noopener noreferrer";
+    appleMusicLink.hidden = true;
+    appleMusicLink.textContent = "artwork via Apple Music ↗";
+
+    window.CampfireArtwork && window.CampfireArtwork.watch(photoImg, photoLetter, song, function (entry) {
+      if (entry.viewUrl) {
+        appleMusicLink.href = entry.viewUrl;
+        appleMusicLink.hidden = false;
+      }
+    });
+
     var caption = document.createElement("figcaption");
     caption.textContent = song.artist + " · " + song.year;
 
@@ -1109,6 +1199,7 @@
     actions.appendChild(link);
     actions.appendChild(chordsBtn);
     actions.appendChild(heardBtn);
+    actions.appendChild(appleMusicLink);
 
     text.appendChild(h);
     text.appendChild(reason);
