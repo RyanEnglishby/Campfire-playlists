@@ -60,8 +60,31 @@ grant select (id, code, song_id, status, start_at, paused_at_sec, mode, votes, v
   on campfire_rooms to anon, authenticated;
 grant insert on campfire_rooms to anon, authenticated;
 
+-- Drop every existing version of these 4 functions, by their real signature,
+-- before recreating them below -- not just "create or replace". A plain
+-- create-or-replace only replaces a function with the exact same argument
+-- list; if some earlier, differently-signatured version of one of these was
+-- ever created by hand (e.g. directly in the SQL editor while iterating),
+-- create-or-replace would silently leave that old copy in place as a second
+-- overload, and Postgres/PostgREST could still end up calling it. This makes
+-- re-running this file always leave exactly one, current version of each.
+do $$
+declare
+  r record;
+begin
+  for r in
+    select p.oid::regprocedure as sig
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public'
+      and p.proname in ('update_campfire_room', 'start_campfire_vote', 'finalize_campfire_vote', 'cast_campfire_vote')
+  loop
+    execute format('drop function if exists %s', r.sig);
+  end loop;
+end $$;
+
 -- Host-only: change the selected song / play / pause / resume.
-create or replace function update_campfire_room(
+create function update_campfire_room(
   p_code text,
   p_secret text,
   p_song_id text,
@@ -93,7 +116,7 @@ grant execute on function update_campfire_room(text, text, text, text, timestamp
 
 -- Host-only: open a fresh voting round (Vote mode) -- clears any previous
 -- votes so counts always reflect only the current round.
-create or replace function start_campfire_vote(
+create function start_campfire_vote(
   p_code text,
   p_secret text
 ) returns boolean
@@ -120,7 +143,7 @@ grant execute on function start_campfire_vote(text, text) to anon, authenticated
 -- breaks ties (no need to duplicate song data in here to do that); this
 -- just atomically applies the result -- sets the winning song, closes the
 -- round, and clears votes for the next one.
-create or replace function finalize_campfire_vote(
+create function finalize_campfire_vote(
   p_code text,
   p_secret text,
   p_song_id text
@@ -152,7 +175,7 @@ grant execute on function finalize_campfire_vote(text, text, text) to anon, auth
 -- scoped with jsonb_set so this can only ever touch their own entry in the
 -- votes map, never anyone else's or any other column, and only takes
 -- effect while a round is actually open.
-create or replace function cast_campfire_vote(
+create function cast_campfire_vote(
   p_code text,
   p_voter_key text,
   p_song_id text
