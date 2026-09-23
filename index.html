@@ -95,24 +95,7 @@
     <p class="quote">Some songs just sound better after midnight.</p>
   </section>
 
-  <section class="control-bar reveal" id="playlist" data-reveal>
-    <div class="categories" id="categories" role="group" aria-label="Filter by mood">
-      <button class="tag-filter is-active" type="button" data-mood="all">All<svg class="scribble-underline" viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true"><use href="#scribble-underline"></use></svg></button>
-      <button class="tag-filter" type="button" data-mood="Late Nights">Late Nights<svg class="scribble-underline" viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true"><use href="#scribble-underline"></use></svg></button>
-      <button class="tag-filter" type="button" data-mood="Acoustic">Acoustic<svg class="scribble-underline" viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true"><use href="#scribble-underline"></use></svg></button>
-      <button class="tag-filter" type="button" data-mood="Singalongs">Singalongs<svg class="scribble-underline" viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true"><use href="#scribble-underline"></use></svg></button>
-      <button class="tag-filter" type="button" data-mood="Nostalgia">Nostalgia<svg class="scribble-underline" viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true"><use href="#scribble-underline"></use></svg></button>
-    </div>
-    <div class="control-side">
-      <button class="shuffle-stub" type="button" id="shuffle-btn"><span>shuffle the fire</span><span class="stub-icon" aria-hidden="true">&#8635;</span></button>
-      <div class="progress-wrap">
-        <div class="tally" id="tally" aria-hidden="true"></div>
-        <span class="progress-text" id="progress-text">0 of 20 heard</span>
-      </div>
-    </div>
-  </section>
-
-  <section class="featured reveal" data-reveal>
+  <section class="featured reveal" id="playlist" data-reveal>
     <p class="section-label">featured tonight</p>
     <div class="featured-card" id="featured-card"></div>
   </section>
@@ -122,6 +105,24 @@
       <h2 class="section-title-loud">Around<br>the Fire</h2>
       <span class="section-count">sixteen songs &mdash; no barre chords required to sing along</span>
     </div>
+
+    <section class="control-bar reveal" data-reveal>
+      <div class="categories" id="categories" role="group" aria-label="Filter by mood">
+        <button class="tag-filter is-active" type="button" data-mood="all">All<svg class="scribble-underline" viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true"><use href="#scribble-underline"></use></svg></button>
+        <button class="tag-filter" type="button" data-mood="Late Nights">Late Nights<svg class="scribble-underline" viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true"><use href="#scribble-underline"></use></svg></button>
+        <button class="tag-filter" type="button" data-mood="Acoustic">Acoustic<svg class="scribble-underline" viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true"><use href="#scribble-underline"></use></svg></button>
+        <button class="tag-filter" type="button" data-mood="Singalongs">Singalongs<svg class="scribble-underline" viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true"><use href="#scribble-underline"></use></svg></button>
+        <button class="tag-filter" type="button" data-mood="Nostalgia">Nostalgia<svg class="scribble-underline" viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true"><use href="#scribble-underline"></use></svg></button>
+      </div>
+      <div class="control-side">
+        <button class="shuffle-stub" type="button" id="shuffle-btn"><span>shuffle the fire</span><span class="stub-icon" aria-hidden="true">&#8635;</span></button>
+        <div class="progress-wrap">
+          <div class="tally" id="tally" aria-hidden="true"></div>
+          <span class="progress-text" id="progress-text">0 of 20 heard</span>
+        </div>
+      </div>
+    </section>
+
     <div class="song-list" id="list-main"></div>
   </section>
 
