@@ -24,6 +24,7 @@
 <link rel="stylesheet" href="contact.css">
 <link rel="stylesheet" href="memories.css">
 <link rel="stylesheet" href="groups.css">
+<link rel="stylesheet" href="chord-diagrams.css">
 </head>
 <body>
 
@@ -434,6 +435,16 @@
 
     <div class="chord-strum-row" id="chord-strum-row"></div>
 
+    <div class="chord-howto" id="chord-howto">
+      <button type="button" class="chord-howto-toggle" id="chord-howto-toggle" aria-expanded="false" aria-controls="chord-howto-panel">
+        How to play these chords <span class="chord-howto-arrow" aria-hidden="true">&#8594;</span>
+      </button>
+      <div class="chord-howto-panel" id="chord-howto-panel" hidden>
+        <p class="chord-howto-capo-note" id="chord-howto-capo-note" hidden></p>
+        <div class="chord-howto-grid" id="chord-howto-grid"></div>
+      </div>
+    </div>
+
     <div class="chord-sheet-body" id="chord-sheet-body">
       <div class="chord-sections" id="chord-sections"></div>
     </div>
@@ -454,6 +465,7 @@
 </div>
 
 <script src="artwork.js"></script>
+<script src="chord-diagrams.js"></script>
 <script src="script.js"></script>
 <script src="contact.js"></script>
 <script src="memories.js"></script>

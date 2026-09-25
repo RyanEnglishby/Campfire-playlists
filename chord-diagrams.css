@@ -1,0 +1,147 @@
+/* ---------- "how to play these chords" diagrams ---------- */
+.chord-howto {
+  flex-shrink: 0;
+  border-bottom: 1px solid rgba(60, 40, 20, 0.15);
+  background: var(--paper);
+}
+
+.chord-howto-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 13px 24px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--ember-ink);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: color 0.2s ease;
+}
+.chord-howto-toggle:hover { color: var(--ember-ink-active); }
+.chord-howto-arrow { display: inline-block; transition: transform 0.25s ease; }
+.chord-howto.is-open .chord-howto-arrow { transform: rotate(90deg); }
+
+.chord-howto-panel {
+  padding: 2px 24px 20px;
+  max-height: 30vh;
+  overflow-y: auto;
+}
+
+.chord-howto-capo-note {
+  font-size: 12.5px;
+  font-style: italic;
+  color: #5a4530;
+  margin: 0 0 14px;
+}
+
+.chord-howto-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(122px, 1fr));
+  gap: 12px;
+}
+
+.chord-diagram-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(60, 40, 20, 0.2);
+  border-radius: 8px;
+  padding: 12px 8px 10px;
+  transition: border-color 0.2s ease;
+}
+
+.chord-diagram-name {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.02em;
+  color: var(--ember-ink);
+  margin: 0 0 8px;
+  text-align: center;
+}
+
+.chord-diagram-label {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 11.5px;
+  color: #5a4530;
+  margin: 8px 0 0;
+  text-align: center;
+}
+
+.chord-diagram-missing {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 12px;
+  color: #5a4530;
+  text-align: center;
+  margin: 6px 0 0;
+}
+
+.chord-diagram-svg {
+  display: block;
+  width: 100%;
+  max-width: 128px;
+  height: auto;
+  margin: 0 auto;
+}
+
+.chord-diagram-string { stroke: rgba(42, 28, 18, 0.4); stroke-width: 1.5; }
+.chord-diagram-fretline { stroke: rgba(42, 28, 18, 0.28); stroke-width: 1.5; }
+.chord-diagram-nut { stroke: var(--ink); stroke-width: 4.5; }
+
+.chord-diagram-marker {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  fill: var(--ink);
+}
+.chord-diagram-marker.is-muted { fill: #8a7256; }
+
+.chord-diagram-position {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  fill: #5a4530;
+}
+
+.chord-diagram-dot { fill: var(--ember-deep); }
+.chord-diagram-barre { fill: var(--ember-deep); opacity: 0.92; }
+.chord-diagram-finger {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 10px;
+  fill: var(--ground-deep);
+}
+
+@keyframes chord-diagram-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(255, 122, 61, 0.55); }
+  70% { box-shadow: 0 0 0 10px rgba(255, 122, 61, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 122, 61, 0); }
+}
+.chord-diagram-card.is-focused {
+  border-color: var(--ember-ink-active);
+  animation: chord-diagram-pulse 1.6s ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .chord-diagram-card.is-focused { animation: none; }
+}
+
+/* clickable chords in the sheet itself -- open/focus the matching diagram */
+.chord-prog-chord, .chord-chunk-chord { cursor: pointer; }
+.chord-prog-chord:hover, .chord-chunk-chord:hover {
+  color: var(--ember-ink-active);
+  text-shadow: 0 0 10px rgba(255, 122, 61, 0.35);
+}
+
+@media (max-width: 640px) {
+  .chord-howto-toggle { padding: 12px 16px; }
+  .chord-howto-panel { padding: 2px 16px 18px; }
+}
