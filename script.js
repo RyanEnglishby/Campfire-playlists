@@ -548,6 +548,9 @@
       var over = document.createElement("span");
       over.className = "chord-chunk-chord";
       over.textContent = c.chord;
+      over.addEventListener("click", function () {
+        window.ChordDiagrams && window.ChordDiagrams.focus(c.chord);
+      });
       var lyric = document.createElement("span");
       lyric.className = "chord-chunk-lyric";
       lyric.textContent = text.slice(c.position, end);
@@ -557,6 +560,23 @@
       chunkEls.push(chunk);
     });
     return { el: p, chordEls: chunkEls };
+  }
+
+  function collectChordNames(entry) {
+    var seen = {};
+    var names = [];
+    function add(name) {
+      if (!name || seen[name]) return;
+      seen[name] = true;
+      names.push(name);
+    }
+    entry.sections.forEach(function (section) {
+      (section.progression || []).forEach(function (item) { add(item.chord); });
+      (section.lines || []).forEach(function (line) {
+        (line.chords || []).forEach(function (c) { add(c.chord); });
+      });
+    });
+    return names;
   }
 
   function renderChordSheet() {
@@ -624,6 +644,9 @@
             var chordEl = document.createElement("span");
             chordEl.className = "chord-prog-chord";
             chordEl.textContent = item.chord;
+            chordEl.addEventListener("click", function () {
+              window.ChordDiagrams && window.ChordDiagrams.focus(item.chord);
+            });
             var strumEl = document.createElement("span");
             strumEl.className = "chord-prog-strum";
             strumEl.textContent = entry.strummingPattern;
@@ -649,6 +672,8 @@
       els.sections.appendChild(block);
       sectionBuilds.push({ section: section, build: build });
     });
+
+    window.ChordDiagrams && window.ChordDiagrams.setSong(collectChordNames(entry), entry.capo);
 
     chordViewerState.timeline = buildPlaybackTimeline(entry, sectionBuilds);
     chordViewerState.activeTimelineIndex = -1;
