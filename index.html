@@ -25,6 +25,7 @@
 <link rel="stylesheet" href="memories.css">
 <link rel="stylesheet" href="groups.css">
 <link rel="stylesheet" href="chord-diagrams.css">
+<link rel="stylesheet" href="auth.css">
 </head>
 <body>
 
@@ -149,7 +150,22 @@
     <p class="section-label">keepsakes</p>
     <h2 class="memories-title">Memories</h2>
     <p class="memories-sub">Every song here has a night attached to it somewhere. Save yours.</p>
-    <p class="memories-privacy">Stored only on this device/browser &mdash; nothing is uploaded anywhere.</p>
+    <p class="memories-privacy" id="memories-privacy">Stored only on this device/browser &mdash; nothing is uploaded anywhere.</p>
+
+    <div class="memories-account" id="memories-account" hidden>
+      <form class="memories-account-form" id="memories-signin-form">
+        <p class="memories-account-lead">Sign in to sync your memories across every device.</p>
+        <div class="memories-account-row">
+          <input type="email" id="memories-signin-email" placeholder="you@email.com" autocomplete="email" required>
+          <button type="submit" class="btn-secondary">Send magic link</button>
+        </div>
+        <p class="memories-account-notice" id="memories-account-notice" hidden></p>
+      </form>
+      <div class="memories-account-signedin" id="memories-account-signedin" hidden>
+        <p class="memories-account-email" id="memories-account-email"></p>
+        <button type="button" class="btn-secondary" id="memories-signout-btn">Sign out</button>
+      </div>
+    </div>
 
     <button type="button" class="btn-primary memories-add-btn" id="open-add-memory">+ Add a Memory</button>
 
@@ -468,8 +484,10 @@
 <script src="chord-diagrams.js"></script>
 <script src="script.js"></script>
 <script src="contact.js"></script>
-<script src="memories.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="supabase-client.js"></script>
+<script src="auth.js"></script>
+<script src="memories.js"></script>
 <script src="groups.js"></script>
 <script src="pwa.js"></script>
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-WF4NH3TRKP"></script>
