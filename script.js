@@ -1696,32 +1696,47 @@
     }, { passive: true });
   }
 
-  // Drives --fire-scroll (see style.css) from 0 at the top of the page to 1
-  // once scrolled about a screen's height down, so the fixed campfire scene
-  // drifts downward as the visitor scrolls away from it -- reversible in
-  // both directions, since it tracks absolute scroll position rather than
-  // a one-shot trigger.
+  // Drives --fire-scroll (see style.css) as a continuous "lean" in the
+  // direction of scroll -- scroll down and the fixed campfire scene lags
+  // behind by a few px like it has weight, then eases back to rest the
+  // moment scrolling stops. Tied to scroll *activity*, not scroll
+  // *position*, specifically so it keeps responding the same way anywhere
+  // on the page, all the way to the footer, rather than a position-based
+  // version that only has room to move within the first screen or so and
+  // then sits frozen for the rest of a long page -- which is what the
+  // previous version of this did, and exactly what read as "stuck."
+  //
+  // The easing lives entirely here, in JS (a per-frame decay toward zero)
+  // -- style.css intentionally puts no CSS transition on `translate`
+  // anymore. A CSS transition chasing a value that's already changing
+  // every animation frame fights the JS easing instead of adding to it,
+  // which is what the previous version's perceptible lag actually was.
   function initFireParallax() {
     var scene = document.getElementById("campfire-scene");
     if (!scene) return;
     if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-    var maxScrollRange = Math.max(window.innerHeight * 0.9, 480);
-    var ticking = false;
+    var MAX_LEAN = 16; // px -- how far the scene can lean from its resting spot
+    var SENSITIVITY = 0.15; // fraction of each scroll delta applied as lean
+    var DECAY = 0.92; // per-frame ease back toward 0 once scrolling pauses
 
-    function update() {
-      ticking = false;
-      var progress = Math.min(1, Math.max(0, window.scrollY / maxScrollRange));
-      document.documentElement.style.setProperty("--fire-scroll", progress.toFixed(3));
+    var lastScrollY = window.scrollY;
+    var lean = 0;
+    var raf = null;
+
+    function tick() {
+      lean *= DECAY;
+      if (Math.abs(lean) < 0.05) lean = 0;
+      document.documentElement.style.setProperty("--fire-scroll", lean.toFixed(2));
+      raf = lean !== 0 ? window.requestAnimationFrame(tick) : null;
     }
 
     window.addEventListener("scroll", function () {
-      if (ticking) return;
-      ticking = true;
-      window.requestAnimationFrame(update);
+      var y = window.scrollY;
+      lean = Math.max(-MAX_LEAN, Math.min(MAX_LEAN, lean + (y - lastScrollY) * SENSITIVITY));
+      lastScrollY = y;
+      if (raf == null) raf = window.requestAnimationFrame(tick);
     }, { passive: true });
-
-    update();
   }
 
   function initEmbersLowOnFooter() {

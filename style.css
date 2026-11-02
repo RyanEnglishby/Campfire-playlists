@@ -41,9 +41,10 @@
   --glow-strength: 1;
   --ember-opacity: 0.95;
 
-  /* 0 at the top of the page, eases toward 1 as the visitor scrolls down --
-     see initFireParallax() in script.js. Drives the campfire scene drifting
-     downward as they scroll away from it. */
+  /* A small px "lean" (positive = down), set every animation frame by
+     initFireParallax() in script.js while scrolling and eased back to 0
+     once it stops -- not a 0-1 position progress, so it keeps responding
+     the same way no matter where on the page the visitor is. */
   --fire-scroll: 0;
 }
 
@@ -169,12 +170,16 @@ button { font: inherit; color: inherit; }
   z-index: 0;
   pointer-events: none;
   overflow: hidden;
-  transition: opacity 2.5s ease, transform 2.5s ease, translate 0.6s cubic-bezier(0.19, 1, 0.22, 1);
+  transition: opacity 2.5s ease, transform 2.5s ease;
   /* `translate` composes with `transform` as its own independent property
      (they don't fight over the same declaration), so this tracks scroll
      continuously without disturbing the slower transform/opacity fade
-     body.embers-low below already does near the footer. */
-  translate: 0 calc(var(--fire-scroll) * 70px);
+     body.embers-low below already does near the footer. Deliberately no
+     transition on `translate` itself -- the JS side already eases this
+     value every frame, and a CSS transition on top of an already-easing
+     value chases a moving target instead of smoothing it, which is what
+     made this feel laggy before. */
+  translate: 0 calc(var(--fire-scroll) * 1px);
 }
 
 body.embers-low .campfire-scene {
@@ -361,7 +366,9 @@ body.campfire-mode .ember-extra { display: block; }
 @media (prefers-reduced-motion: reduce) {
   .glow, .glow-wide, .flame, .flame-wrap, .ember, .stars, .smoke span { animation: none !important; }
   .ember { opacity: 0.6; }
-  .campfire-scene { transition: opacity 2.5s ease, transform 2.5s ease; }
+  /* No separate .campfire-scene override needed here -- initFireParallax()
+     in script.js already skips attaching its scroll listener entirely
+     under reduced motion, so --fire-scroll never leaves its default 0. */
 }
 
 /* ---------- layout shell ---------- */
