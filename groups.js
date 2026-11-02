@@ -2,16 +2,10 @@
   "use strict";
 
   // ---- config -------------------------------------------------------
-  // Fill these in after running supabase/schema.sql in a Supabase project.
-  // The anon key is meant to be public (same trust model as any Supabase
-  // static-site setup) -- real protection is the RLS + RPC in schema.sql,
-  // not secrecy of this key.
-  var SUPABASE_URL = "https://gvsvobehytjgidclilwa.supabase.co";
-  var SUPABASE_ANON_KEY = "sb_publishable_CudMVeTx70qoNujEcYmb1Q_ZHVA0w4x";
-  var SUPABASE_CONFIGURED =
-    SUPABASE_URL.indexOf("YOUR_SUPABASE") === -1 &&
-    SUPABASE_ANON_KEY.indexOf("YOUR_SUPABASE") === -1;
-
+  // The Supabase client itself (URL/key/isReady/getClient) lives in
+  // supabase-client.js, shared with auth.js and memories.js -- see that
+  // file for why. Run supabase/schema.sql in that project to set up the
+  // table/functions this feature needs.
   var ROOM_MAX_AGE_MS = 6 * 60 * 60 * 1000;
   var START_BUFFER_MS = 3000;
   var CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
@@ -23,7 +17,6 @@
   var SESSION_KEY = "campfire-group-session";
 
   var els = {};
-  var supabaseClient = null;
   var channel = null;
   var countdownInterval = null;
   var room = null; // { id, code, isHost, hostSecret, songId, status, startAt, pausedAtSec, mode, votes, votingOpen, createdAt }
@@ -98,10 +91,7 @@
   }
 
   function getClient() {
-    if (!supabaseClient && SUPABASE_CONFIGURED && window.supabase && window.supabase.createClient) {
-      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    }
-    return supabaseClient;
+    return window.CampfireSupabase ? window.CampfireSupabase.getClient() : null;
   }
 
   function saveSession() {
@@ -793,12 +783,10 @@
   }
 
   function isSupabaseReady() {
-    // SUPABASE_CONFIGURED alone isn't enough -- the CDN script (loaded via
-    // its own <script> tag before this file) can fail to load for reasons
-    // that have nothing to do with configuration: an ad blocker, a
-    // corporate firewall, or a network hiccup. Either way the graceful
-    // fallback is the same "not set up" message, not a crash on first click.
-    return SUPABASE_CONFIGURED && !!(window.supabase && window.supabase.createClient);
+    // Either way the graceful fallback is the same "not set up" message,
+    // not a crash on first click -- see supabase-client.js for what
+    // "ready" means here.
+    return !!(window.CampfireSupabase && window.CampfireSupabase.isReady());
   }
 
   function init() {

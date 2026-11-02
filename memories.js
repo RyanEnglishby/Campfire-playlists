@@ -30,10 +30,23 @@
     els.songSelect = $("memory-song");
     els.captionInput = $("memory-caption");
     els.dateInput = $("memory-date");
+    els.privacy = $("memories-privacy");
   }
 
   // ---- storage ----
-  function loadMemories() {
+  // Two backends behind the same shape. Signed-out visitors keep using
+  // localStorage exactly as before. Signed-in visitors (see auth.js) read
+  // and write the `memories` table instead (supabase/memories_schema.sql),
+  // scoped to their own account by row-level security -- everything above
+  // this layer (rendering, the add-memory form, delete) works the same
+  // either way.
+  var cloudUser = null;
+
+  function isCloudMode() {
+    return !!(cloudUser && window.CampfireSupabase && window.CampfireSupabase.isReady());
+  }
+
+  function loadMemoriesLocal() {
     try {
       var raw = localStorage.getItem(STORAGE_KEY);
       var list = raw ? JSON.parse(raw) : [];
@@ -43,12 +56,104 @@
     }
   }
 
-  function saveMemories(list) {
+  function saveMemoriesLocal(list) {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
       return true;
     } catch (e) {
       return false; // most likely quota exceeded
+    }
+  }
+
+  function rowToMemory(row) {
+    return {
+      id: row.id,
+      photo: row.photo,
+      songTitle: row.song_title,
+      caption: row.caption || "",
+      date: row.memory_date || "",
+      createdAt: new Date(row.created_at).getTime()
+    };
+  }
+
+  function loadMemories() {
+    if (!isCloudMode()) return Promise.resolve(loadMemoriesLocal());
+    return window.CampfireSupabase.getClient()
+      .from("memories")
+      .select("*")
+      .eq("user_id", cloudUser.id)
+      .order("created_at", { ascending: true })
+      .then(function (res) {
+        if (res.error) throw res.error;
+        return (res.data || []).map(rowToMemory);
+      });
+  }
+
+  function addMemory(memory) {
+    if (!isCloudMode()) {
+      var list = loadMemoriesLocal();
+      list.push(memory);
+      return saveMemoriesLocal(list) ? Promise.resolve(memory) : Promise.reject(new Error("local-quota"));
+    }
+    return window.CampfireSupabase.getClient()
+      .from("memories")
+      .insert({
+        user_id: cloudUser.id,
+        song_title: memory.songTitle,
+        caption: memory.caption || null,
+        memory_date: memory.date || null,
+        photo: memory.photo
+      })
+      .select()
+      .single()
+      .then(function (res) {
+        if (res.error) throw res.error;
+        return rowToMemory(res.data);
+      });
+  }
+
+  // First sign-in on a device that already had local memories: move them
+  // into the cloud once each. Tagging each one `migrated` (rather than, say,
+  // clearing local storage, or just checking whether the cloud happens to
+  // be empty) is what makes this safe on a shared/reused device: if a
+  // *different* person signs in on this same browser later, their
+  // migration only ever looks at local memories that are still untagged --
+  // someone else's already-migrated ones are never re-offered or copied
+  // into a second account. Local storage itself is left alone either way,
+  // so signed-out visitors keep seeing their own local history.
+  function migrateLocalIfNeeded() {
+    var local = loadMemoriesLocal();
+    var unmigrated = local.filter(function (m) { return !m.migrated; });
+    if (!unmigrated.length) return Promise.resolve();
+    var ordered = unmigrated.slice().sort(function (a, b) { return a.createdAt - b.createdAt; });
+    return ordered.reduce(function (chain, memory) {
+      return chain.then(function () {
+        return addMemory(memory).then(function () { memory.migrated = true; });
+      });
+    }, Promise.resolve()).then(function () {
+      saveMemoriesLocal(local);
+    }).catch(function () {
+      // best-effort -- whatever succeeded above is already tagged, so it
+      // won't be re-uploaded next time; save that partial progress and
+      // leave the rest to be picked up on the next sign-in.
+      saveMemoriesLocal(local);
+    });
+  }
+
+  function updatePrivacyNotice() {
+    if (!els.privacy) return;
+    els.privacy.textContent = isCloudMode()
+      ? "Synced to your account — visible on any device you sign in on."
+      : "Stored only on this device/browser — nothing is uploaded anywhere.";
+  }
+
+  function handleAuthChange(user) {
+    cloudUser = user;
+    updatePrivacyNotice();
+    if (user) {
+      migrateLocalIfNeeded().then(renderMemories);
+    } else {
+      renderMemories();
     }
   }
 
@@ -126,19 +231,26 @@
   // innerHTML, so a caption typed by a visitor can never be interpreted as
   // markup ----
   function renderMemories() {
-    var list = loadMemories();
-    els.grid.innerHTML = "";
+    loadMemories().then(function (list) {
+      els.grid.innerHTML = "";
 
-    if (list.length === 0) {
+      if (list.length === 0) {
+        els.empty.hidden = false;
+        els.grid.hidden = true;
+        return;
+      }
+      els.empty.hidden = true;
+      els.grid.hidden = false;
+
+      list.slice().reverse().forEach(function (memory) {
+        els.grid.appendChild(buildMemoryCard(memory));
+      });
+    }).catch(function () {
+      // Cloud fetch failed (network blip) -- show the empty state rather
+      // than crash. Local data, if any, is never touched by this, and the
+      // next successful render picks up right where the cloud is.
       els.empty.hidden = false;
       els.grid.hidden = true;
-      return;
-    }
-    els.empty.hidden = true;
-    els.grid.hidden = false;
-
-    list.slice().reverse().forEach(function (memory) {
-      els.grid.appendChild(buildMemoryCard(memory));
     });
   }
 
@@ -192,9 +304,12 @@
   }
 
   function deleteMemory(id) {
-    var list = loadMemories().filter(function (m) { return m.id !== id; });
-    saveMemories(list);
-    renderMemories();
+    var op = isCloudMode()
+      ? window.CampfireSupabase.getClient().from("memories").delete().eq("id", id).eq("user_id", cloudUser.id)
+          .then(function (res) { if (res.error) throw res.error; })
+      : Promise.resolve(saveMemoriesLocal(loadMemoriesLocal().filter(function (m) { return m.id !== id; })));
+    op.catch(function () { /* network blip -- the item just reappears on render below */ })
+      .then(renderMemories);
   }
 
   // ---- add-memory modal ----
@@ -275,7 +390,6 @@
       setNotice("Saving…");
 
       compressImage(file).then(function (dataUrl) {
-        var list = loadMemories();
         var memory = {
           id: Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
           photo: dataUrl,
@@ -284,15 +398,16 @@
           date: els.dateInput.value || "",
           createdAt: Date.now()
         };
-        list.push(memory);
-        var ok = saveMemories(list);
-        if (submitBtn) submitBtn.disabled = false;
-        if (!ok) {
-          setNotice("Couldn't save — this device may be out of storage. Try deleting an older memory first.");
-          return;
-        }
-        renderMemories();
-        closeModal();
+        addMemory(memory).then(function () {
+          if (submitBtn) submitBtn.disabled = false;
+          renderMemories();
+          closeModal();
+        }).catch(function (err) {
+          if (submitBtn) submitBtn.disabled = false;
+          setNotice(err && err.message === "local-quota"
+            ? "Couldn't save — this device may be out of storage. Try deleting an older memory first."
+            : "Couldn't save — check your connection and try again.");
+        });
       }).catch(function () {
         if (submitBtn) submitBtn.disabled = false;
         setNotice("Couldn't read that photo — try a different one.");
@@ -304,6 +419,11 @@
     if (!$("memories")) return; // this page doesn't have the Memories section
     cacheEls();
     populateSongSelect();
+    if (window.CampfireAuth) {
+      cloudUser = window.CampfireAuth.getUser();
+      window.CampfireAuth.onChange(handleAuthChange);
+    }
+    updatePrivacyNotice();
     renderMemories();
     wireModal();
   }
