@@ -124,15 +124,33 @@
   var ROOM_COLUMNS = "id, code, song_id, status, start_at, paused_at_sec, mode, votes, voting_open, created_at";
 
   function createRoomRow(code, hostSecret, mode) {
+    // host_user_id is purely additive context for a signed-in host -- real
+    // host authority is, and stays, 100% gated by hostSecret below, so this
+    // never changes what anonymous hosting can do.
+    var user = window.CampfireAuth && window.CampfireAuth.getUser();
+    var payload = { code: code, host_secret: hostSecret, mode: mode };
+    if (user) payload.host_user_id = user.id;
     return getClient()
       .from("campfire_rooms")
-      .insert({ code: code, host_secret: hostSecret, mode: mode })
+      .insert(payload)
       .select(ROOM_COLUMNS)
       .single()
       .then(function (res) {
         if (res.error) throw res.error;
         return res.data;
       });
+  }
+
+  // A signed-in visitor's own "campfires I've been part of" history --
+  // entirely separate from the live realtime-presence roster every
+  // participant already sees, and from host authority, which this has no
+  // bearing on at all. No-op when signed out.
+  function recordCampfireJoin(roomId) {
+    var user = window.CampfireAuth && window.CampfireAuth.getUser();
+    if (!user || !window.CampfireSupabase || !window.CampfireSupabase.isReady()) return;
+    getClient().from("campfire_room_participants")
+      .upsert({ room_id: roomId, user_id: user.id }, { onConflict: "room_id,user_id", ignoreDuplicates: true })
+      .then(function () {}, function () {});
   }
 
   function fetchRoomByCode(code) {
@@ -639,6 +657,7 @@
     createRoomRow(code, secret, mode)
       .then(function (row) {
         enterRoom(row, true, secret);
+        recordCampfireJoin(row.id);
         // The host's own client is the one authoritative source for these
         // kickoff actions -- reusing the exact same RPCs a later Random
         // reshuffle / Vote round already uses, not a separate path.
@@ -658,6 +677,7 @@
         if (isRoomExpired(row)) throw new Error("expired");
         closeJoinModal();
         enterRoom(row, false, null);
+        recordCampfireJoin(row.id);
       })
       .catch(function (err) {
         if (!els.joinNotice) return;

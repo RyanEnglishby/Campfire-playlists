@@ -152,20 +152,7 @@
     <p class="memories-sub">Every song here has a night attached to it somewhere. Save yours.</p>
     <p class="memories-privacy" id="memories-privacy">Stored only on this device/browser &mdash; nothing is uploaded anywhere.</p>
 
-    <div class="memories-account" id="memories-account" hidden>
-      <form class="memories-account-form" id="memories-signin-form">
-        <p class="memories-account-lead">Sign in to sync your memories across every device.</p>
-        <div class="memories-account-row">
-          <input type="email" id="memories-signin-email" placeholder="you@email.com" autocomplete="email" required>
-          <button type="submit" class="btn-secondary">Send magic link</button>
-        </div>
-        <p class="memories-account-notice" id="memories-account-notice" hidden></p>
-      </form>
-      <div class="memories-account-signedin" id="memories-account-signedin" hidden>
-        <p class="memories-account-email" id="memories-account-email"></p>
-        <button type="button" class="btn-secondary" id="memories-signout-btn">Sign out</button>
-      </div>
-    </div>
+    <div class="memories-auth-gate" id="memories-auth-gate"></div>
 
     <button type="button" class="btn-primary memories-add-btn" id="open-add-memory">+ Add a Memory</button>
 
@@ -443,6 +430,7 @@
           <h3 class="chord-title" id="chord-title"></h3>
           <p class="chord-meta" id="chord-meta"></p>
           <div class="chord-badges" id="chord-badges"></div>
+          <div class="chord-progress-row" id="chord-progress-row"></div>
           <a class="chord-artwork-credit" id="chord-artwork-credit" target="_blank" rel="noopener noreferrer" hidden>artwork via Apple Music &#8599;</a>
         </div>
       </div>
