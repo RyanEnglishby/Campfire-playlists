@@ -1436,6 +1436,34 @@
     }, { passive: true });
   }
 
+  // Drives --fire-scroll (see style.css) from 0 at the top of the page to 1
+  // once scrolled about a screen's height down, so the fixed campfire scene
+  // drifts downward as the visitor scrolls away from it -- reversible in
+  // both directions, since it tracks absolute scroll position rather than
+  // a one-shot trigger.
+  function initFireParallax() {
+    var scene = document.getElementById("campfire-scene");
+    if (!scene) return;
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    var maxScrollRange = Math.max(window.innerHeight * 0.9, 480);
+    var ticking = false;
+
+    function update() {
+      ticking = false;
+      var progress = Math.min(1, Math.max(0, window.scrollY / maxScrollRange));
+      document.documentElement.style.setProperty("--fire-scroll", progress.toFixed(3));
+    }
+
+    window.addEventListener("scroll", function () {
+      if (ticking) return;
+      ticking = true;
+      window.requestAnimationFrame(update);
+    }, { passive: true });
+
+    update();
+  }
+
   function initEmbersLowOnFooter() {
     var footer = document.querySelector(".closing");
     if (!footer || !("IntersectionObserver" in window)) return;
@@ -1613,6 +1641,7 @@
     initSmoke();
     initDust();
     initStarParallax();
+    initFireParallax();
     initEmbersLowOnFooter();
     initNearGlow();
     initCampfireMode();
