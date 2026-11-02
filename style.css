@@ -40,6 +40,11 @@
   --motion-scale: 1;
   --glow-strength: 1;
   --ember-opacity: 0.95;
+
+  /* 0 at the top of the page, eases toward 1 as the visitor scrolls down --
+     see initFireParallax() in script.js. Drives the campfire scene drifting
+     downward as they scroll away from it. */
+  --fire-scroll: 0;
 }
 
 body.campfire-mode {
@@ -164,7 +169,12 @@ button { font: inherit; color: inherit; }
   z-index: 0;
   pointer-events: none;
   overflow: hidden;
-  transition: opacity 2.5s ease, transform 2.5s ease;
+  transition: opacity 2.5s ease, transform 2.5s ease, translate 0.6s cubic-bezier(0.19, 1, 0.22, 1);
+  /* `translate` composes with `transform` as its own independent property
+     (they don't fight over the same declaration), so this tracks scroll
+     continuously without disturbing the slower transform/opacity fade
+     body.embers-low below already does near the footer. */
+  translate: 0 calc(var(--fire-scroll) * 70px);
 }
 
 body.embers-low .campfire-scene {
@@ -351,6 +361,7 @@ body.campfire-mode .ember-extra { display: block; }
 @media (prefers-reduced-motion: reduce) {
   .glow, .glow-wide, .flame, .flame-wrap, .ember, .stars, .smoke span { animation: none !important; }
   .ember { opacity: 0.6; }
+  .campfire-scene { transition: opacity 2.5s ease, transform 2.5s ease; }
 }
 
 /* ---------- layout shell ---------- */
