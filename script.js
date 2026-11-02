@@ -1630,6 +1630,39 @@
     for (var j = 0; j < extraCount; j++) makeEmber(true);
   }
 
+  // Occasional small sparks popping off the fire, distinct from the
+  // steady drifting embers above: smaller, quicker, one at a time, and
+  // actually removed from the DOM once their one-shot CSS animation ends
+  // rather than looping forever. Paused while the tab is hidden so a
+  // backgrounded page isn't quietly spawning/removing nodes forever.
+  function initSparks() {
+    var embersEl = document.getElementById("embers");
+    var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!embersEl || reduceMotion) return;
+
+    function spawnSpark() {
+      if (document.visibilityState !== "hidden") {
+        var span = document.createElement("span");
+        span.className = "ember spark";
+        var xPct = 40 + Math.random() * 20;
+        var size = 1.5 + Math.random() * 1.5;
+        var dur = 0.8 + Math.random() * 0.6;
+        var drift = (Math.random() * 40 - 20).toFixed(0) + "px";
+        span.style.setProperty("--x", xPct + "%");
+        span.style.setProperty("--size", size.toFixed(1) + "px");
+        span.style.setProperty("--dur", dur.toFixed(2) + "s");
+        span.style.setProperty("--drift", drift);
+        embersEl.appendChild(span);
+        // Same "duration * 1.7 + buffer" margin sparkBurst() already uses
+        // below -- covers campfire-mode's up-to-1.6x --motion-scale
+        // stretching the actual on-screen animation time.
+        window.setTimeout(function () { span.remove(); }, dur * 1000 * 1.7 + 200);
+      }
+      window.setTimeout(spawnSpark, 1600 + Math.random() * 2600);
+    }
+    window.setTimeout(spawnSpark, 900 + Math.random() * 1500);
+  }
+
   function initSmoke() {
     var el = document.getElementById("smoke");
     var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -1923,6 +1956,7 @@
     initShuffle();
     initReveal();
     initEmbers();
+    initSparks();
     initSmoke();
     initDust();
     initStarParallax();
