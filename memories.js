@@ -31,6 +31,7 @@
     els.captionInput = $("memory-caption");
     els.dateInput = $("memory-date");
     els.privacy = $("memories-privacy");
+    els.authGate = $("memories-auth-gate");
   }
 
   // ---- storage ----
@@ -147,9 +148,22 @@
       : "Stored only on this device/browser — nothing is uploaded anywhere.";
   }
 
+  // Signed out: the shared "sign in to use this" prompt (account.html is
+  // the one place sign-in actually happens now -- see auth.js). Signed in:
+  // nothing extra here, the privacy line above already says so.
+  function updateAuthGate() {
+    if (!els.authGate) return;
+    if (isCloudMode()) {
+      els.authGate.innerHTML = "";
+    } else if (window.CampfireAuth) {
+      window.CampfireAuth.renderGate(els.authGate, "Sign in to sync your memories across every device.");
+    }
+  }
+
   function handleAuthChange(user) {
     cloudUser = user;
     updatePrivacyNotice();
+    updateAuthGate();
     if (user) {
       migrateLocalIfNeeded().then(renderMemories);
     } else {
@@ -424,6 +438,7 @@
       window.CampfireAuth.onChange(handleAuthChange);
     }
     updatePrivacyNotice();
+    updateAuthGate();
     renderMemories();
     wireModal();
   }

@@ -128,6 +128,13 @@
 
   var ALL_SONGS = MAIN.concat(DYING, [FEATURED, FINALE]);
   var STORAGE_KEY = "campfire-songs-heard";
+  // Separate from STORAGE_KEY itself so overwriting the main heard map
+  // (see reconcileHeardAfterSignIn) never loses track of which titles have
+  // already been claimed by someone's account -- the same per-item tagging
+  // memories.js uses, for the same reason: it's what stops a *different*
+  // person signing in later on a shared device from inheriting whatever
+  // anonymous local marks are still sitting around as their own.
+  var HEARD_MIGRATED_KEY = "campfire-songs-heard-migrated";
 
   /* ---------- chord data: one reusable object per song ----------
      Only fields already established elsewhere on this site (title,
@@ -674,6 +681,7 @@
     });
 
     window.ChordDiagrams && window.ChordDiagrams.setSong(collectChordNames(entry), entry.capo);
+    renderChordProgressRow(entry);
 
     chordViewerState.timeline = buildPlaybackTimeline(entry, sectionBuilds);
     chordViewerState.activeTimelineIndex = -1;
@@ -837,6 +845,7 @@
 
     function beginPlayback() {
       chordViewerState.autoScrollOn = true;
+      chordViewerState.practiceStartedAt = Date.now();
       chordViewerState.lastFrameTime = null;
       setPlayButtonState(true);
       chordViewerState.autoScrollRaf = window.requestAnimationFrame(step);
@@ -940,6 +949,7 @@
 
   function stopAutoScroll() {
     cancelCountIn();
+    if (chordViewerState.autoScrollOn) logPracticeSession();
     chordViewerState.autoScrollOn = false;
     if (chordViewerState.autoScrollRaf) {
       window.cancelAnimationFrame(chordViewerState.autoScrollRaf);
@@ -1025,6 +1035,253 @@
 
   var heard = loadHeard();
 
+  // ---- heard-tracking: synced to the signed-in account, local-first -----
+  // The DOM is already painted from `heard` by the time anyone could be
+  // known to be signed in (loadHeard() runs at parse time, well before
+  // DOMContentLoaded) -- so unlike memories.js, which was async end-to-end
+  // before it ever touched Supabase, syncing here means *retroactively*
+  // patching already-rendered .heard-dot buttons once sign-in state is
+  // known, rather than branching the render path itself.
+  function loadHeardMigratedTags() {
+    try {
+      var raw = localStorage.getItem(HEARD_MIGRATED_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) {
+      return {};
+    }
+  }
+  function saveHeardMigratedTags(tags) {
+    try { localStorage.setItem(HEARD_MIGRATED_KEY, JSON.stringify(tags)); } catch (e) {}
+  }
+
+  function repaintAllHeardToggles() {
+    document.querySelectorAll(".heard-dot").forEach(function (btn) {
+      var isHeard = !!heard[btn.dataset.songTitle];
+      btn.classList.toggle("is-heard", isHeard);
+      btn.setAttribute("aria-pressed", isHeard ? "true" : "false");
+    });
+  }
+
+  // Uploads any local heard-marks not yet tagged as claimed by some
+  // account, tagging each as it succeeds -- same per-item approach
+  // memories.js's migrateLocalIfNeeded() uses, and for the same reason.
+  function migrateHeardIfNeeded(user) {
+    var local = loadHeard();
+    var tags = loadHeardMigratedTags();
+    var unmigrated = Object.keys(local).filter(function (t) { return local[t] && !tags[t]; });
+    if (!unmigrated.length) return Promise.resolve();
+    var client = window.CampfireSupabase.getClient();
+    return unmigrated.reduce(function (chain, title) {
+      return chain.then(function () {
+        return client.from("heard_songs")
+          .upsert({ user_id: user.id, song_title: title }, { onConflict: "user_id,song_title", ignoreDuplicates: true })
+          .then(function () { tags[title] = true; });
+      });
+    }, Promise.resolve()).then(function () {
+      saveHeardMigratedTags(tags);
+    }).catch(function () {
+      saveHeardMigratedTags(tags); // keep whatever progress was made before a failure
+    });
+  }
+
+  // Cloud becomes the complete truth for "heard" once signed in -- this
+  // replaces the in-memory/local map rather than merging it, which is what
+  // correctly drops any stale leftover marks from a previous signed-out (or
+  // different-account) use of this same browser once reconciled.
+  function reconcileHeardAfterSignIn(user) {
+    migrateHeardIfNeeded(user).then(function () {
+      return window.CampfireSupabase.getClient().from("heard_songs").select("song_title").eq("user_id", user.id);
+    }).then(function (res) {
+      if (res.error) throw res.error;
+      var next = {};
+      (res.data || []).forEach(function (row) { next[row.song_title] = true; });
+      heard = next;
+      saveHeard(heard);
+      repaintAllHeardToggles();
+      updateProgress();
+    }).catch(function () {
+      // cloud fetch failed -- leave the already-rendered local state as-is
+      // rather than clobbering a working display with nothing
+    });
+  }
+
+  function syncHeardToggleToCloud(title, isHeard) {
+    var user = window.CampfireAuth && window.CampfireAuth.getUser();
+    if (!user || !window.CampfireSupabase || !window.CampfireSupabase.isReady()) return;
+    var client = window.CampfireSupabase.getClient();
+    if (isHeard) {
+      // A supabase-js query builder is a thenable, not a promise: the
+      // request is only actually sent once something calls .then()/awaits
+      // it. A bare call with neither, as this one originally was, silently
+      // never fires at all -- caught by a real browser test that checked
+      // the mock's underlying table instead of trusting the call "worked".
+      client.from("heard_songs")
+        .upsert({ user_id: user.id, song_title: title }, { onConflict: "user_id,song_title", ignoreDuplicates: true })
+        .then(function () {}, function () {});
+      var tags = loadHeardMigratedTags();
+      tags[title] = true;
+      saveHeardMigratedTags(tags);
+    } else {
+      client.from("heard_songs").delete().eq("user_id", user.id).eq("song_title", title).then(function () {}, function () {});
+    }
+  }
+
+  function handleHeardAuthChange(user) {
+    if (user) {
+      reconcileHeardAfterSignIn(user);
+    } else {
+      heard = loadHeard();
+      repaintAllHeardToggles();
+      updateProgress();
+    }
+  }
+
+  // ---- favourites: signed-in only, no local data to migrate (brand new) --
+  function repaintFavourites(titles) {
+    var set = {};
+    titles.forEach(function (t) { set[t] = true; });
+    document.querySelectorAll(".favourite-dot").forEach(function (btn) {
+      var isFav = !!set[btn.dataset.songTitle];
+      btn.classList.toggle("is-favourite", isFav);
+      btn.setAttribute("aria-pressed", isFav ? "true" : "false");
+    });
+  }
+
+  function handleFavouritesAuthChange(user) {
+    if (!user || !window.CampfireSupabase || !window.CampfireSupabase.isReady()) {
+      repaintFavourites([]);
+      return;
+    }
+    window.CampfireSupabase.getClient().from("favourites").select("song_title").eq("user_id", user.id)
+      .then(function (res) {
+        if (res.error) throw res.error;
+        repaintFavourites((res.data || []).map(function (r) { return r.song_title; }));
+      })
+      .catch(function () { /* leave whatever was last painted */ });
+  }
+
+  function toggleFavourite(title, btn) {
+    var user = window.CampfireAuth && window.CampfireAuth.getUser();
+    if (!user || !window.CampfireSupabase || !window.CampfireSupabase.isReady()) return;
+    var isFav = !btn.classList.contains("is-favourite");
+    btn.classList.toggle("is-favourite", isFav);
+    btn.setAttribute("aria-pressed", isFav ? "true" : "false");
+    var client = window.CampfireSupabase.getClient();
+    if (isFav) {
+      client.from("favourites")
+        .upsert({ user_id: user.id, song_title: title }, { onConflict: "user_id,song_title", ignoreDuplicates: true })
+        .then(function () {}, function () {});
+    } else {
+      client.from("favourites").delete().eq("user_id", user.id).eq("song_title", title).then(function () {}, function () {});
+    }
+  }
+
+  function makeFavouriteToggle(song) {
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "favourite-dot";
+    btn.title = "Favourite this song";
+    btn.dataset.songTitle = song.title;
+    btn.setAttribute("aria-pressed", "false");
+    btn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7.5-4.6-10.1-9.1C.3 8.8 1.6 5 5.2 4.1c2-.5 4 .3 5.1 2 .2.3.4.6.7 1 .3-.4.5-.7.7-1 1.1-1.7 3.1-2.5 5.1-2 3.6.9 4.9 4.7 3.3 7.8C19.5 16.4 12 21 12 21z" fill="currentColor"/></svg>';
+    btn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      var user = window.CampfireAuth && window.CampfireAuth.getUser();
+      if (!user) { window.location.href = "account.html"; return; }
+      toggleFavourite(song.title, btn);
+    });
+    return btn;
+  }
+
+  // ---- learning progress + practice history (chord viewer header) -------
+  function renderChordProgressRow(entry) {
+    var row = document.getElementById("chord-progress-row");
+    if (!row) return;
+    row.innerHTML = "";
+    var user = window.CampfireAuth && window.CampfireAuth.getUser();
+    if (!user || !window.CampfireSupabase || !window.CampfireSupabase.isReady()) {
+      if (window.CampfireAuth) window.CampfireAuth.renderGate(row, "Sign in to track your learning progress and practice history.");
+      return;
+    }
+
+    function labelFor(status) {
+      if (status === "learning") return "Learning";
+      if (status === "comfortable") return "Comfortable";
+      if (status === "mastered") return "Mastered";
+      return "Set your progress";
+    }
+    function nextStatus(status) {
+      if (status === "learning") return "comfortable";
+      if (status === "comfortable") return "mastered";
+      return "learning";
+    }
+
+    var statusBtn = document.createElement("button");
+    statusBtn.type = "button";
+    statusBtn.className = "chord-progress-status";
+    statusBtn.textContent = labelFor(null);
+    row.appendChild(statusBtn);
+
+    var statsEl = document.createElement("span");
+    statsEl.className = "chord-progress-stats";
+    row.appendChild(statsEl);
+
+    var client = window.CampfireSupabase.getClient();
+    var title = entry.title;
+    var currentStatus = null;
+
+    statusBtn.addEventListener("click", function () {
+      var next = nextStatus(currentStatus);
+      currentStatus = next;
+      statusBtn.textContent = labelFor(next);
+      statusBtn.className = "chord-progress-status is-" + next;
+      client.from("learning_progress")
+        .upsert({ user_id: user.id, song_title: title, status: next, updated_at: new Date().toISOString() }, { onConflict: "user_id,song_title" })
+        .then(function () {}, function () {});
+    });
+
+    client.from("learning_progress").select("status").eq("user_id", user.id).eq("song_title", title)
+      .then(function (res) {
+        var row0 = !res.error && res.data && res.data[0];
+        if (!row0) return;
+        currentStatus = row0.status;
+        statusBtn.textContent = labelFor(currentStatus);
+        statusBtn.className = "chord-progress-status is-" + currentStatus;
+      }, function () {});
+
+    client.from("practice_sessions").select("duration_seconds").eq("user_id", user.id).eq("song_title", title)
+      .then(function (res) {
+        if (res.error || !res.data || !res.data.length) return;
+        var count = res.data.length;
+        var totalMin = Math.round(res.data.reduce(function (sum, r) { return sum + r.duration_seconds; }, 0) / 60);
+        statsEl.textContent = "Practiced " + count + "×" + (totalMin > 0 ? " · " + totalMin + "m total" : "");
+      }, function () {});
+  }
+
+  // Logs however long the most recent play-along run lasted, once it stops
+  // (pause or close -- see stopAutoScroll()). Signed-in only, and skips
+  // anything shorter than a few seconds so an accidental play/pause tap
+  // doesn't count as a session.
+  function logPracticeSession() {
+    var startedAt = chordViewerState.practiceStartedAt;
+    chordViewerState.practiceStartedAt = null;
+    if (!startedAt) return;
+    var durationSec = Math.round((Date.now() - startedAt) / 1000);
+    if (durationSec < 3) return;
+    var user = window.CampfireAuth && window.CampfireAuth.getUser();
+    if (!user || !window.CampfireSupabase || !window.CampfireSupabase.isReady()) return;
+    var entry = CHORD_DATA_BY_ID[chordViewerState.currentId];
+    if (!entry) return;
+    window.CampfireSupabase.getClient().from("practice_sessions").insert({
+      user_id: user.id,
+      song_title: entry.title,
+      started_at: new Date(startedAt).toISOString(),
+      duration_seconds: durationSec
+    }).then(function (res) {
+      if (!res.error && chordViewerState.currentId === entry.id) renderChordProgressRow(entry);
+    }, function () {});
+  }
+
   function spotifyGlyph() {
     var wrap = document.createElement("span");
     wrap.className = "spotify-glyph";
@@ -1037,6 +1294,7 @@
     btn.type = "button";
     btn.className = "heard-dot" + (heard[song.title] ? " is-heard" : "");
     btn.title = "Mark as heard around the fire";
+    btn.dataset.songTitle = song.title;
     btn.setAttribute("aria-pressed", heard[song.title] ? "true" : "false");
     btn.innerHTML =
       '<svg class="scribble-check" viewBox="0 0 24 24" aria-hidden="true">' +
@@ -1053,6 +1311,7 @@
       btn.setAttribute("aria-pressed", heard[song.title] ? "true" : "false");
       saveHeard(heard);
       updateProgress();
+      syncHeardToggleToCloud(song.title, heard[song.title]);
     });
     return btn;
   }
@@ -1085,6 +1344,7 @@
     titleEl.textContent = song.title;
     headline.appendChild(titleEl);
     headline.appendChild(makeHeardToggle(song));
+    headline.appendChild(makeFavouriteToggle(song));
 
     var meta = document.createElement("p");
     meta.className = "track-meta";
@@ -1634,6 +1894,16 @@
 
   document.addEventListener("DOMContentLoaded", function () {
     renderAll();
+    // script.js's own DOMContentLoaded listener fires before auth.js's
+    // (script.js's <script> tag comes first, so it registers first) --
+    // that guarantees this is subscribed before auth.js's init() ever
+    // calls the SDK's onAuthStateChange, so the SDK's initial-state fire
+    // always reaches this listener, with no need to also check
+    // getUser() here and risk handling that same initial state twice.
+    if (window.CampfireAuth) {
+      window.CampfireAuth.onChange(handleHeardAuthChange);
+      window.CampfireAuth.onChange(handleFavouritesAuthChange);
+    }
     initCategories();
     initShuffle();
     initReveal();

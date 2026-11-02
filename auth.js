@@ -1,119 +1,75 @@
-// Camp Chord -- sign in (so Memories can sync across devices).
+// Camp Chord accounts -- the one site-wide auth system.
 //
-// Passwordless: a visitor types their email, gets a one-time magic link,
-// clicking it signs them in. No password to set, forget, or reset. Lives
-// entirely inside the Memories section since syncing Memories is the only
-// thing being signed in actually does right now -- see memories.js.
+// Email + password via Supabase Auth (signUp/signInWithPassword, plus
+// forgot/reset-password and sign-out). This file only owns the session
+// itself and a couple of small, reusable primitives -- the actual sign-up/
+// login/reset UI lives in account.js (account.html), which is the one place
+// a visitor actually authenticates. Every other feature (Memories, Groups,
+// the per-song features in script.js) just asks this file "who's signed in"
+// and "tell me when that changes."
 //
 // Uses the shared Supabase client (supabase-client.js) -- if Supabase isn't
-// reachable at all, the whole account bar just stays hidden and Memories
-// keeps working exactly as it always has, stored only on this device.
+// reachable at all, everything here degrades to "nobody's signed in" and
+// every feature's own local-only fallback keeps working untouched.
 (function () {
   "use strict";
 
-  var els = {};
-  var changeListeners = [];
   var currentUser = null;
+  var changeListeners = [];
+  var recoveryListeners = [];
 
-  function $(id) { return document.getElementById(id); }
-
-  function cacheEls() {
-    els.account = $("memories-account");
-    els.signinForm = $("memories-signin-form");
-    els.emailInput = $("memories-signin-email");
-    els.notice = $("memories-account-notice");
-    els.signedIn = $("memories-account-signedin");
-    els.emailDisplay = $("memories-account-email");
-    els.signoutBtn = $("memories-signout-btn");
+  function getClient() {
+    return window.CampfireSupabase ? window.CampfireSupabase.getClient() : null;
   }
 
-  function setNotice(message, isError) {
-    if (!els.notice) return;
-    els.notice.textContent = message || "";
-    els.notice.hidden = !message;
-    els.notice.classList.toggle("is-error", !!isError);
+  // Always account.html, regardless of which page a call happens to be made
+  // from -- resolved against the current directory so this works the same
+  // on GitHub Pages (a subpath) and a local dev server (the root).
+  function accountPageUrl() {
+    return window.location.origin + window.location.pathname.replace(/[^/]*$/, "") + "account.html";
   }
 
-  function updateUi() {
-    if (!els.account) return;
-    var signedIn = !!currentUser;
-    if (els.signinForm) els.signinForm.hidden = signedIn;
-    if (els.signedIn) els.signedIn.hidden = !signedIn;
-    if (signedIn && els.emailDisplay) {
-      els.emailDisplay.textContent = "Signed in as " + currentUser.email;
-    }
+  function onAccountPage() {
+    return /(^|\/)account\.html$/.test(window.location.pathname);
   }
 
-  // Magic links return with #access_token=...&refresh_token=...&... in the
-  // URL -- the SDK consumes it automatically, but leaving the tokens
-  // sitting in the address bar/history afterward is just untidy and
-  // mildly risky. Strip it once it's been read.
+  // Auth redirects return with #access_token=...&refresh_token=...&type=...
+  // in the URL -- the SDK consumes it automatically, but leaving tokens
+  // sitting in the address bar/history afterward is untidy and mildly
+  // risky. Strip it once it's been read, whatever kind of redirect it was.
   function cleanAuthHash() {
     if (window.location.hash.indexOf("access_token") === -1) return;
     var clean = window.location.pathname + window.location.search;
     window.history.replaceState(null, "", clean);
   }
 
+  // PASSWORD_RECOVERY carries a real session too (clicking a reset-password
+  // email link signs you in, same as a magic link always has) -- but a
+  // visitor who just clicked "reset my password" has not asked to sign
+  // into every feature on the site, only to set a new password. Routing it
+  // to a separate listener (only account.js subscribes) instead of
+  // `changeListeners` (which memories.js and friends subscribe to) is what
+  // stops a mid-reset session from silently triggering, say, Memories'
+  // sign-in/migrate logic in a tab the visitor never asked to sign into --
+  // the same class of cross-user bug already caught once this session,
+  // guarded against here from the start instead.
   function handleAuthChange(event, session) {
-    currentUser = (session && session.user) || null;
-    if (event === "SIGNED_IN") cleanAuthHash();
-    updateUi();
-    if (event === "SIGNED_IN") setNotice("");
+    var user = (session && session.user) || null;
+
+    if (event === "PASSWORD_RECOVERY") {
+      recoveryListeners.forEach(function (fn) { fn(user); });
+      if (!onAccountPage()) window.location.href = accountPageUrl();
+      return;
+    }
+
+    currentUser = user;
+    if (event === "SIGNED_IN" || event === "SIGNED_UP") cleanAuthHash();
     changeListeners.forEach(function (fn) { fn(currentUser); });
   }
 
-  function sendMagicLink(email) {
-    var client = window.CampfireSupabase.getClient();
-    var redirectTo = window.location.origin + window.location.pathname;
-    var submitBtn = els.signinForm.querySelector('button[type="submit"]');
-    if (submitBtn) submitBtn.disabled = true;
-    setNotice("Sending…");
-
-    client.auth.signInWithOtp({
-      email: email,
-      options: { emailRedirectTo: redirectTo, shouldCreateUser: true }
-    }).then(function (res) {
-      if (submitBtn) submitBtn.disabled = false;
-      if (res.error) {
-        setNotice("Couldn't send that link" + (res.error.message ? " (" + res.error.message + ")" : "") + ".", true);
-        return;
-      }
-      setNotice("Check " + email + " for a sign-in link.");
-    }).catch(function () {
-      if (submitBtn) submitBtn.disabled = false;
-      setNotice("Couldn't send that link — check your connection and try again.", true);
-    });
-  }
-
-  function wireUi() {
-    if (els.signinForm) {
-      els.signinForm.addEventListener("submit", function (e) {
-        e.preventDefault();
-        var email = (els.emailInput.value || "").trim();
-        if (!email) return;
-        sendMagicLink(email);
-      });
-    }
-    if (els.signoutBtn) {
-      els.signoutBtn.addEventListener("click", function () {
-        var client = window.CampfireSupabase.getClient();
-        els.signoutBtn.disabled = true;
-        client.auth.signOut().finally(function () {
-          els.signoutBtn.disabled = false;
-        });
-      });
-    }
-  }
-
   function init() {
-    cacheEls();
-    if (!els.account) return; // this page doesn't have Memories
-    if (!window.CampfireSupabase || !window.CampfireSupabase.isReady()) return; // stays hidden
-
-    els.account.hidden = false;
-    wireUi();
-
-    var client = window.CampfireSupabase.getClient();
+    var client = getClient();
+    if (!client) return; // Supabase unreachable -- every feature's local fallback takes over
     client.auth.onAuthStateChange(handleAuthChange);
   }
 
@@ -123,11 +79,53 @@
     init();
   }
 
+  // ---- shared "sign in to use this" prompt -----------------------------
+  // One implementation so Memories, Favourites, Learning progress, and
+  // Practice history don't each grow their own slightly-different copy.
+  function renderGate(container, message) {
+    if (!container) return;
+    container.innerHTML = "";
+    var p = document.createElement("p");
+    p.className = "auth-gate";
+    p.textContent = (message || "Sign in to use this.") + " ";
+    var link = document.createElement("a");
+    link.className = "auth-gate-link";
+    link.href = "account.html";
+    link.textContent = "Sign in";
+    p.appendChild(link);
+    container.appendChild(p);
+  }
+
   window.CampfireAuth = {
     getUser: function () { return currentUser; },
+    // Genuine sign-in/sign-out transitions only -- see handleAuthChange.
     onChange: function (fn) { if (typeof fn === "function") changeListeners.push(fn); },
+    // Fires only on account.html, only mid-password-reset.
+    onPasswordRecovery: function (fn) { if (typeof fn === "function") recoveryListeners.push(fn); },
+    renderGate: renderGate,
+
+    signUp: function (email, password) {
+      var client = getClient();
+      if (!client) return Promise.reject(new Error("not-configured"));
+      return client.auth.signUp({ email: email, password: password, options: { emailRedirectTo: accountPageUrl() } });
+    },
+    signIn: function (email, password) {
+      var client = getClient();
+      if (!client) return Promise.reject(new Error("not-configured"));
+      return client.auth.signInWithPassword({ email: email, password: password });
+    },
+    requestPasswordReset: function (email) {
+      var client = getClient();
+      if (!client) return Promise.reject(new Error("not-configured"));
+      return client.auth.resetPasswordForEmail(email, { redirectTo: accountPageUrl() });
+    },
+    setNewPassword: function (password) {
+      var client = getClient();
+      if (!client) return Promise.reject(new Error("not-configured"));
+      return client.auth.updateUser({ password: password });
+    },
     signOut: function () {
-      var client = window.CampfireSupabase && window.CampfireSupabase.getClient();
+      var client = getClient();
       return client ? client.auth.signOut() : Promise.resolve();
     }
   };

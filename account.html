@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Account &mdash; Camp Chord</title>
+<meta name="description" content="Sign in or create a Camp Chord account.">
+<meta name="color-scheme" content="dark">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.googletagmanager.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://*.supabase.co wss://*.supabase.co; manifest-src 'self'; media-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="theme-color" content="#03050a">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Campfire">
+<style>html,body{background:#03050a;margin:0}</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,600&family=Caveat:wght@500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="auth.css">
+<link rel="stylesheet" href="account.css">
+</head>
+<body class="account-page">
+
+<div class="account-wrap">
+
+  <a class="account-back" href="index.html">&larr; Back to Camp Chord</a>
+
+  <header class="account-head">
+    <p class="account-eyebrow">your account</p>
+    <h1 class="account-page-title">Camp<br>Chord</h1>
+  </header>
+
+  <div class="account-loading" id="account-loading">Loading&hellip;</div>
+
+  <p class="account-not-configured" id="account-not-configured" hidden>
+    Accounts aren&rsquo;t set up on this deployment yet.
+  </p>
+
+  <div class="account-card" id="account-signedout" hidden>
+    <div class="account-tabs" role="tablist">
+      <button type="button" class="account-tab is-active" id="account-tab-login" role="tab" aria-selected="true">Log in</button>
+      <button type="button" class="account-tab" id="account-tab-signup" role="tab" aria-selected="false">Create account</button>
+    </div>
+
+    <form class="account-form" id="account-login-form">
+      <label class="account-field">
+        <span>Email</span>
+        <input type="email" id="account-login-email" autocomplete="email" required>
+      </label>
+      <label class="account-field">
+        <span>Password</span>
+        <input type="password" id="account-login-password" autocomplete="current-password" required>
+      </label>
+      <button type="submit" class="btn-primary account-submit">Log in</button>
+      <button type="button" class="account-text-link" id="account-forgot-link">Forgot password?</button>
+      <p class="account-notice" id="account-login-notice" hidden></p>
+    </form>
+
+    <form class="account-form" id="account-signup-form" hidden>
+      <label class="account-field">
+        <span>Email</span>
+        <input type="email" id="account-signup-email" autocomplete="email" required>
+      </label>
+      <label class="account-field">
+        <span>Password</span>
+        <input type="password" id="account-signup-password" autocomplete="new-password" minlength="6" required>
+      </label>
+      <label class="account-field">
+        <span>Confirm password</span>
+        <input type="password" id="account-signup-password-confirm" autocomplete="new-password" required>
+      </label>
+      <button type="submit" class="btn-primary account-submit">Create account</button>
+      <p class="account-notice" id="account-signup-notice" hidden></p>
+    </form>
+
+    <form class="account-form" id="account-forgot-form" hidden>
+      <p class="account-form-lead">We&rsquo;ll email you a link to reset your password.</p>
+      <label class="account-field">
+        <span>Email</span>
+        <input type="email" id="account-forgot-email" autocomplete="email" required>
+      </label>
+      <button type="submit" class="btn-primary account-submit">Send reset link</button>
+      <button type="button" class="account-text-link" id="account-back-to-login-link">Back to log in</button>
+      <p class="account-notice" id="account-forgot-notice" hidden></p>
+    </form>
+  </div>
+
+  <div class="account-card account-card-center" id="account-pending" hidden>
+    <p class="account-state-icon" aria-hidden="true">&#9993;</p>
+    <h2 class="account-state-title">Check your email</h2>
+    <p class="account-state-body">We sent a confirmation link to <strong id="account-pending-email"></strong>. Click it to finish creating your account.</p>
+  </div>
+
+  <div class="account-card" id="account-recovery" hidden>
+    <h2 class="account-state-title">Set a new password</h2>
+    <form id="account-recovery-form">
+      <label class="account-field">
+        <span>New password</span>
+        <input type="password" id="account-recovery-password" autocomplete="new-password" minlength="6" required>
+      </label>
+      <label class="account-field">
+        <span>Confirm new password</span>
+        <input type="password" id="account-recovery-password-confirm" autocomplete="new-password" required>
+      </label>
+      <button type="submit" class="btn-primary account-submit">Set new password</button>
+      <p class="account-notice" id="account-recovery-notice" hidden></p>
+    </form>
+  </div>
+
+  <div class="account-card account-card-center" id="account-profile" hidden>
+    <div class="account-avatar" id="account-avatar" aria-hidden="true"></div>
+    <p class="account-profile-email" id="account-profile-email"></p>
+    <p class="account-profile-since" id="account-profile-since"></p>
+    <button type="button" class="btn-secondary account-signout-btn" id="account-signout-btn">Log out</button>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="supabase-client.js"></script>
+<script src="auth.js"></script>
+<script src="account.js"></script>
+<script src="pwa.js"></script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-WF4NH3TRKP"></script>
+<script src="analytics.js"></script>
+</body>
+</html>

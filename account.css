@@ -1,0 +1,205 @@
+/* ---------- account page shell (mirrors tuner.css's page conventions) ---------- */
+.account-wrap {
+  max-width: 440px;
+  margin: 0 auto;
+  padding: 48px 20px 80px;
+  position: relative;
+  z-index: 1;
+}
+
+.account-back {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  color: var(--cream-faint);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+.account-back:hover { color: var(--amber); border-color: var(--amber); }
+
+.account-head { margin: 36px 0 30px; text-align: center; }
+.account-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ember-deep);
+  margin: 0 0 14px;
+}
+.account-page-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-style: italic;
+  font-size: clamp(36px, 8vw, 54px);
+  line-height: 1.05;
+  margin: 0;
+  color: var(--cream);
+  text-shadow: 0 0 40px rgba(255, 140, 65, 0.22);
+}
+
+.account-loading,
+.account-not-configured {
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--cream-faint);
+}
+.account-not-configured {
+  border: 1px dashed rgba(230, 180, 120, 0.3);
+  border-radius: 6px;
+  padding: 14px 18px;
+}
+
+/* ---------- card ---------- */
+.account-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 26px 24px 28px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+}
+.account-card-center { text-align: center; }
+
+/* ---------- tabs ---------- */
+.account-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 22px;
+  border-bottom: 1px solid var(--line);
+}
+.account-tab {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  color: var(--cream-faint);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 10px 6px 12px;
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+.account-tab:hover { color: var(--cream-dim); }
+.account-tab.is-active { color: var(--amber); border-color: var(--amber); }
+
+/* ---------- forms ---------- */
+.account-form { display: flex; flex-direction: column; gap: 14px; }
+.account-form[hidden] { display: none; }
+.account-form-lead {
+  font-size: 13.5px;
+  color: var(--cream-dim);
+  margin: 0 0 2px;
+}
+
+.account-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  color: var(--cream-faint);
+}
+.account-field input {
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: var(--cream);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 11px 12px;
+  min-height: 44px;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+.account-field input::placeholder { color: var(--cream-faint); }
+.account-field input:focus {
+  outline: none;
+  border-color: var(--amber);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.account-submit { width: 100%; margin-top: 4px; }
+
+.account-text-link {
+  align-self: center;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--cream-faint);
+  background: none;
+  border: none;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+  padding: 4px;
+  transition: color 0.2s ease;
+}
+.account-text-link:hover { color: var(--amber); }
+
+.account-notice {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--amber);
+  background: rgba(255, 122, 61, 0.1);
+  border: 1px solid rgba(255, 122, 61, 0.25);
+  border-radius: 4px;
+  padding: 10px 12px;
+  margin: 0;
+}
+.account-notice.is-error { color: #ff8f6b; border-color: rgba(255, 90, 50, 0.4); background: rgba(255, 90, 50, 0.1); }
+
+/* ---------- pending / recovery states ---------- */
+.account-state-icon { font-size: 34px; margin: 0 0 10px; }
+.account-state-title {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 700;
+  font-size: 24px;
+  color: var(--cream);
+  margin: 0 0 12px;
+}
+.account-state-body {
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--cream-dim);
+  margin: 0;
+}
+.account-state-body strong { color: var(--cream); }
+
+#account-recovery .account-state-title { text-align: center; }
+
+/* ---------- profile ---------- */
+.account-avatar {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 14px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 24px;
+  color: var(--ground-deep);
+  background: linear-gradient(180deg, var(--ember) 0%, var(--ember-deep) 100%);
+}
+.account-profile-email {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  color: var(--cream);
+  margin: 0 0 4px;
+  overflow-wrap: anywhere;
+}
+.account-profile-since {
+  font-size: 13px;
+  color: var(--cream-faint);
+  margin: 0 0 20px;
+}
+.account-signout-btn { width: 100%; max-width: 220px; }
+
+@media (max-width: 480px) {
+  .account-wrap { padding: 32px 16px 64px; }
+  .account-card { padding: 20px 18px 22px; }
+}
