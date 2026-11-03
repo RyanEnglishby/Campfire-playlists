@@ -233,6 +233,29 @@
     wireForms();
     window.CampfireAuth.onChange(refresh);
     window.CampfireAuth.onPasswordRecovery(function () { setState("recovery"); });
+
+    // Safety net: the SDK's first auth event (reporting whatever session,
+    // or lack of one, it finds) normally arrives almost instantly. If that
+    // never happens -- a stalled request while it tries to restore a
+    // stored session, rather than a clean error -- nothing else here will
+    // ever move the page off "Loading...". Time out into the signed-out
+    // form instead of leaving a visitor staring at a spinner forever; if
+    // the real auth state does still arrive after this fires, refresh()
+    // (already subscribed above) corrects it whenever it does.
+    window.setTimeout(function () {
+      if (els.loading && !els.loading.hidden) {
+        setState("signed-out");
+        showLoginTab();
+        if (els.signedOut) {
+          var notice = document.createElement("p");
+          notice.className = "account-notice is-error";
+          notice.style.textAlign = "center";
+          notice.style.margin = "0 0 16px";
+          notice.textContent = "Taking longer than expected to reach the server. You can still try signing in below.";
+          els.signedOut.insertBefore(notice, els.signedOut.firstChild);
+        }
+      }
+    }, 6000);
   }
 
   if (document.readyState === "loading") {
