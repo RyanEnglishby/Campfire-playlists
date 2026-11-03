@@ -20,6 +20,8 @@
   text-decoration: none;
   border-bottom: 1px solid transparent;
   transition: color 0.2s ease, border-color 0.2s ease;
+  padding: 10px 0;
+  margin: -10px 0;
 }
 .tuner-back:hover { color: var(--amber); border-color: var(--amber); }
 
