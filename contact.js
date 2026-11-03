@@ -196,7 +196,7 @@
       if (!what) { setNotice(form, "Please describe what went wrong."); return; }
       if (!EMAIL_CONFIGURED) { setNotice(form, NOT_CONFIGURED_MSG); return; }
 
-      var subject = "Bug Report — Campfire Songs";
+      var subject = "Bug Report — Camp Chord";
       var body = [
         "What went wrong: " + what,
         "Song affected: " + (song || "(not given)"),
@@ -222,7 +222,7 @@
       if (hint) { hint.textContent = NOT_CONFIGURED_MSG; hint.hidden = false; }
     });
     if (EMAIL_CONFIGURED) {
-      link.href = buildMailto("Campfire Songs — Feedback", "");
+      link.href = buildMailto("Camp Chord — Feedback", "");
     }
   }
 
