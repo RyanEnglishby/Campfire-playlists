@@ -106,6 +106,17 @@
     if (/invalid.*email|unable to validate email/i.test(msg)) return "That doesn't look like a valid email address.";
     if (/rate limit|too many/i.test(msg)) return "Too many attempts — wait a moment and try again.";
     if (/user not found|no user found/i.test(msg)) return "We couldn't find an account with that email.";
+    // Browser-internal network-failure strings (never application errors --
+    // these mean the request never got a response at all): Safari says
+    // "Load failed", Chrome "Failed to fetch", Firefox "NetworkError when
+    // attempting to fetch resource". Showing the raw string to a visitor
+    // ("Load failed") reads as broken and explains nothing; this is
+    // genuinely the same situation as the existing .catch() fallback
+    // elsewhere in this file, just arriving as a resolved {error} instead
+    // of a rejected promise, which is how the Supabase client reports it.
+    if (/load failed|failed to fetch|networkerror|network request failed|fetch failed/i.test(msg)) {
+      return "Couldn't reach the server. Check your connection, or it may be temporarily unavailable — try again in a moment.";
+    }
     return msg || "Something went wrong.";
   }
 
