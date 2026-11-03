@@ -18,6 +18,10 @@
   text-decoration: underline;
   text-underline-offset: 2px;
   margin-left: 4px;
+  padding: 10px 2px;
+  margin-top: -10px;
+  margin-bottom: -10px;
+  display: inline-block;
 }
 .auth-gate-link:hover { color: var(--cream); }
 

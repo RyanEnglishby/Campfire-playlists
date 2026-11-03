@@ -1006,18 +1006,26 @@ body.campfire-mode .polaroid-photo::after { opacity: 1; }
   white-space: nowrap;
   border-bottom: 1px solid transparent;
   transition: border-color 0.2s ease, color 0.2s ease;
+  /* Padding grows the tappable height to a comfortable size; the matching
+     negative margin cancels it back out so the visible text/row spacing
+     looks exactly as before. */
+  padding: 10px 0;
+  margin: -10px 0;
 }
 .listen-link:hover { border-color: var(--amber); color: var(--cream); }
 .listen-link .spotify-glyph { width: 13px; height: 13px; display: inline-flex; opacity: 0.85; }
 .listen-link .spotify-glyph svg { width: 100%; height: 100%; }
 .listen-link.big { font-size: 13.5px; }
 .listen-link.big .spotify-glyph { width: 16px; height: 16px; }
-button.listen-link { background: none; border: none; padding: 0; cursor: pointer; }
+button.listen-link { background: none; border: none; cursor: pointer; }
 
 .heard-dot {
   flex-shrink: 0;
-  width: 24px;
-  height: 24px;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: none;
   border: none;
   padding: 0;
@@ -1027,14 +1035,17 @@ button.listen-link { background: none; border: none; padding: 0; cursor: pointer
 }
 .heard-dot:hover { color: var(--amber); }
 .heard-dot.is-heard { color: var(--ember); }
-.scribble-check { width: 100%; height: 100%; }
+.scribble-check { width: 24px; height: 24px; }
 .scribble-check .scribble-fill { opacity: 0; transition: opacity 0.25s ease; }
 .heard-dot.is-heard .scribble-fill { opacity: 1; }
 
 .favourite-dot {
   flex-shrink: 0;
-  width: 24px;
-  height: 24px;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: none;
   border: none;
   padding: 0;
@@ -1042,7 +1053,7 @@ button.listen-link { background: none; border: none; padding: 0; cursor: pointer
   color: var(--cream-faint);
   transition: color 0.2s ease, transform 0.15s ease;
 }
-.favourite-dot svg { width: 100%; height: 100%; }
+.favourite-dot svg { width: 24px; height: 24px; }
 .favourite-dot:hover { color: var(--amber); }
 .favourite-dot.is-favourite { color: var(--ember); transform: scale(1.08); }
 
@@ -1751,6 +1762,18 @@ body.chord-viewer-open { overflow: hidden; }
   .song-list { max-width: 100%; }
   .track-thumb { width: 44px; height: 44px; }
   .track-thumb-fallback { font-size: 18px; }
+  /* Pre-existing bug, not something introduced by today's changes: with
+     .track-actions' flex-shrink:0 and .track-main's flex-basis of 0%,
+     .track's flex-wrap never actually triggered -- a 0-basis item is
+     always considered "fitting," so .track-actions (view chords/listen,
+     both white-space:nowrap) never got pushed to its own line. Instead
+     everything stayed crammed onto one line and .track-main (title/meta/
+     difficulty/capo) was squeezed down to a ~55px sliver, wrapping its
+     text one word per line. Forcing a 100% flex-basis here is what
+     actually makes it wrap: a full-width item can never share a line
+     with anything else, so it reliably drops to its own row, freeing the
+     first line for thumb+num+title to use the full card width. */
+  .track-actions { flex-basis: 100%; margin-top: 10px; }
 
   .head-quiet { text-align: left; }
 
