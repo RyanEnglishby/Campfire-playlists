@@ -24,3 +24,48 @@
 .chord-viewer .auth-gate { color: #5a4530; }
 .chord-viewer .auth-gate-link { color: var(--ember-ink); }
 .chord-viewer .auth-gate-link:hover { color: var(--ember-ink-active); }
+
+/* ---------- site-wide account widget ---------- */
+/* A small, always-reachable way to get to account.html from any page --
+   mirrors .atmosphere-btn's pill language (dark glass, amber hover) so it
+   reads as part of the same chrome, just parked at the opposite corner.
+   initAuthWidget() in auth.js toggles it between "Sign in" and a small
+   avatar once a user is actually known. */
+.auth-widget {
+  position: fixed;
+  top: max(18px, env(safe-area-inset-top, 0px));
+  right: max(18px, env(safe-area-inset-right, 0px));
+  z-index: 20;
+}
+.auth-widget-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  color: var(--cream-dim);
+  background: rgba(16, 13, 10, 0.88);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 10px 16px;
+  text-decoration: none;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35);
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+.auth-widget-link:hover { border-color: var(--amber); color: var(--cream); }
+.auth-widget-link.is-signed-in {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 50%;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 16px;
+  color: var(--ground-deep);
+  background: linear-gradient(180deg, var(--ember) 0%, var(--ember-deep) 100%);
+  border-color: transparent;
+}
+.auth-widget-link.is-signed-in:hover { color: var(--ground-deep); border-color: var(--cream); }
