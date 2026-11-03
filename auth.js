@@ -67,7 +67,30 @@
     changeListeners.forEach(function (fn) { fn(currentUser); });
   }
 
+  // Site-wide "Sign in" / account pill -- present on every page that
+  // includes this markup (not just account.html), so the account system is
+  // reachable from anywhere rather than only discoverable by stumbling into
+  // a gated feature. Degrades to nothing if the markup isn't on the page.
+  function renderAuthWidget(user) {
+    var link = document.getElementById("auth-widget-link");
+    if (!link) return;
+    if (user) {
+      link.textContent = (user.email || "?").charAt(0).toUpperCase();
+      link.title = user.email || "";
+      link.setAttribute("aria-label", "Account: " + (user.email || ""));
+      link.classList.add("is-signed-in");
+    } else {
+      link.textContent = "Sign in";
+      link.title = "";
+      link.removeAttribute("aria-label");
+      link.classList.remove("is-signed-in");
+    }
+  }
+
   function init() {
+    renderAuthWidget(currentUser);
+    changeListeners.push(renderAuthWidget);
+
     var client = getClient();
     if (!client) return; // Supabase unreachable -- every feature's local fallback takes over
     client.auth.onAuthStateChange(handleAuthChange);

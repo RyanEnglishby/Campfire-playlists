@@ -103,6 +103,9 @@
     if (/invalid login credentials/i.test(msg)) return "Wrong email or password.";
     if (/email not confirmed/i.test(msg)) return "Confirm your email first — check your inbox for the link.";
     if (/password.*(least|short|weak)/i.test(msg)) return "Choose a longer password (at least 6 characters).";
+    if (/invalid.*email|unable to validate email/i.test(msg)) return "That doesn't look like a valid email address.";
+    if (/rate limit|too many/i.test(msg)) return "Too many attempts — wait a moment and try again.";
+    if (/user not found|no user found/i.test(msg)) return "We couldn't find an account with that email.";
     return msg || "Something went wrong.";
   }
 
