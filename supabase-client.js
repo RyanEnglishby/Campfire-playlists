@@ -31,7 +31,23 @@
 
   function getClient() {
     if (!isReady()) return null;
-    if (!client) client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    if (!client) {
+      try {
+        client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      } catch (e) {
+        // createClient() can throw in edge cases outside this file's
+        // control (a corrupted stored session the SDK can't parse, a
+        // browser storage API behaving unexpectedly). Letting that
+        // exception escape here would propagate straight out of auth.js's
+        // init() and abort the rest of that script -- meaning
+        // window.CampfireAuth never gets defined at all, which breaks
+        // every page that reads it, not just this one call site.
+        // Returning null instead degrades to the same "nobody's signed
+        // in, local fallback takes over" path every other reachability
+        // failure already goes through.
+        return null;
+      }
+    }
     return client;
   }
 
