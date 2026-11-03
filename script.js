@@ -174,6 +174,40 @@
   var DEFAULT_STRUM_EASY = "↓ ↓ ↓ ↓";
   var DEFAULT_BPM = 90;
 
+  /* ---------- chord transposition ----------
+     Pure mechanical pitch-shifting of chord names already verified in the
+     data above -- never invents a new chord, just renames an existing one
+     by real chromatic distance (e.g. "C" + 2 semitones is unambiguously
+     "D", the same fact any music theory reference agrees on). The
+     underlying entry.sections data is never mutated -- only the text shown
+     (and the chord name handed to ChordDiagrams/the playback timeline's
+     labels) changes, so the beat/timing math that drives play-along and
+     Campfire Groups sync, which only ever reads `.beats`, is untouched. */
+  var CHROMATIC = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+  var FLAT_TO_SHARP = { Db: "C#", Eb: "D#", Gb: "F#", Ab: "G#", Bb: "A#" };
+  var TRANSPOSE_MAX = 6; // semitones either direction -- a full tritone each way covers every practical re-key
+
+  function transposeNote(note, semitones) {
+    var sharp = FLAT_TO_SHARP[note] || note;
+    var idx = CHROMATIC.indexOf(sharp);
+    if (idx === -1) return note; // not a real note name -- leave it alone rather than guess
+    return CHROMATIC[((idx + semitones) % 12 + 12) % 12];
+  }
+
+  // "Am" -> root "A", rest "m". "D/F#" -> root "D", rest "/F#" (bass note
+  // transposed too). "Cadd9" -> root "C", rest "add9" (untouched, it's a
+  // chord-quality suffix, not a note).
+  function transposeChordName(name, semitones) {
+    if (!name || !semitones) return name;
+    var m = /^([A-G](?:#|b)?)(.*)$/.exec(name);
+    if (!m) return name;
+    var root = m[1], rest = m[2];
+    var slash = /^(.*)\/([A-G](?:#|b)?)$/.exec(rest);
+    var newRoot = transposeNote(root, semitones);
+    if (slash) return newRoot + slash[1] + "/" + transposeNote(slash[2], semitones);
+    return newRoot + rest;
+  }
+
   // Plain string -> defaults to a full 4/4 bar (beats: 4). Pass ch(chord,
   // beats) instead when a specific chord holds for something other than
   // one full bar (a passing chord, a two-bar hold, a split bar, etc).
@@ -473,9 +507,29 @@
     });
   }
 
+  // Adjustable reading text size -- a reading preference, not a per-song
+  // one, so (unlike transpose below) it's saved and carried from song to
+  // song. Scales only the chord-sheet's own text via the --chord-text-scale
+  // custom property (see style.css); nothing else on the page is affected.
+  var TEXT_SCALE_STEPS = [0.85, 1, 1.15, 1.3];
+  var TEXT_SCALE_LABELS = ["Small", "Default", "Large", "X-Large"];
+  var TEXT_SCALE_KEY = "campfire-chord-text-scale";
+  var textScaleIndex = (function () {
+    try {
+      var saved = parseInt(localStorage.getItem(TEXT_SCALE_KEY), 10);
+      return (saved >= 0 && saved < TEXT_SCALE_STEPS.length) ? saved : 1;
+    } catch (e) { return 1; }
+  })();
+
   var chordViewerState = {
     currentId: null,
     speedIndex: DEFAULT_SPEED_INDEX,
+    // Semitone offset from the written key -- resets to 0 every time a
+    // different song opens (see openChordViewer). Unlike textScaleIndex
+    // above, this is a per-viewing convenience, not a saved preference:
+    // nobody wants last night's capo-dodging transpose silently applied to
+    // a completely different song tomorrow.
+    transpose: 0,
     autoScrollOn: false,
     autoScrollRaf: null,
     lastFrameTime: null,
@@ -506,7 +560,12 @@
       sections: document.getElementById("chord-sections"),
       playBtn: document.getElementById("chord-play-toggle"),
       playLabel: document.getElementById("chord-play-label"),
-      speedDisplay: document.getElementById("chord-speed-display")
+      speedDisplay: document.getElementById("chord-speed-display"),
+      transposeDisplay: document.getElementById("chord-transpose-display"),
+      transposeReset: document.getElementById("chord-transpose-reset"),
+      textSizeDisplay: document.getElementById("chord-textsize-display"),
+      prevBtn: document.getElementById("chord-prev"),
+      nextBtn: document.getElementById("chord-next")
     };
   }
 
@@ -531,7 +590,7 @@
     container.appendChild(item);
   }
 
-  function renderLyricLine(line) {
+  function renderLyricLine(line, transpose) {
     var p = document.createElement("p");
     p.className = "chord-line";
     var text = line.lyrics || "";
@@ -554,9 +613,9 @@
       chunk.className = "chord-chunk";
       var over = document.createElement("span");
       over.className = "chord-chunk-chord";
-      over.textContent = c.chord;
+      over.textContent = transposeChordName(c.chord, transpose);
       over.addEventListener("click", function () {
-        window.ChordDiagrams && window.ChordDiagrams.focus(c.chord);
+        window.ChordDiagrams && window.ChordDiagrams.focus(transposeChordName(c.chord, transpose));
       });
       var lyric = document.createElement("span");
       lyric.className = "chord-chunk-lyric";
@@ -569,13 +628,14 @@
     return { el: p, chordEls: chunkEls };
   }
 
-  function collectChordNames(entry) {
+  function collectChordNames(entry, transpose) {
     var seen = {};
     var names = [];
     function add(name) {
-      if (!name || seen[name]) return;
-      seen[name] = true;
-      names.push(name);
+      var shown = transposeChordName(name, transpose);
+      if (!shown || seen[shown]) return;
+      seen[shown] = true;
+      names.push(shown);
     }
     entry.sections.forEach(function (section) {
       (section.progression || []).forEach(function (item) { add(item.chord); });
@@ -590,6 +650,7 @@
     var entry = CHORD_DATA_BY_ID[chordViewerState.currentId];
     if (!entry) return;
     var els = chordViewerEls();
+    var t = chordViewerState.transpose;
 
     els.title.textContent = entry.title;
     els.meta.textContent = entry.artist + " · " + entry.year;
@@ -636,7 +697,7 @@
       if (lyricLines.length) {
         build.lineChordEls = [];
         lyricLines.forEach(function (line) {
-          var rendered = renderLyricLine(line);
+          var rendered = renderLyricLine(line, t);
           block.appendChild(rendered.el);
           build.lineChordEls.push(rendered.chordEls);
         });
@@ -650,9 +711,9 @@
             slot.className = "chord-prog-item";
             var chordEl = document.createElement("span");
             chordEl.className = "chord-prog-chord";
-            chordEl.textContent = item.chord;
+            chordEl.textContent = transposeChordName(item.chord, t);
             chordEl.addEventListener("click", function () {
-              window.ChordDiagrams && window.ChordDiagrams.focus(item.chord);
+              window.ChordDiagrams && window.ChordDiagrams.focus(transposeChordName(item.chord, t));
             });
             var strumEl = document.createElement("span");
             strumEl.className = "chord-prog-strum";
@@ -680,8 +741,10 @@
       sectionBuilds.push({ section: section, build: build });
     });
 
-    window.ChordDiagrams && window.ChordDiagrams.setSong(collectChordNames(entry), entry.capo);
+    window.ChordDiagrams && window.ChordDiagrams.setSong(collectChordNames(entry, t), entry.capo);
     renderChordProgressRow(entry);
+    renderTransposeControl();
+    updatePrevNextButtons();
 
     chordViewerState.timeline = buildPlaybackTimeline(entry, sectionBuilds);
     chordViewerState.activeTimelineIndex = -1;
@@ -785,6 +848,41 @@
     if (els.speedDisplay) els.speedDisplay.textContent = SPEED_LABELS[chordViewerState.speedIndex];
   }
 
+  function renderTransposeControl() {
+    var els = chordViewerEls();
+    if (!els.transposeDisplay) return;
+    var t = chordViewerState.transpose;
+    els.transposeDisplay.textContent = t === 0 ? "Original key" : (t > 0 ? "+" + t : String(t)) + " semitones";
+    if (els.transposeReset) els.transposeReset.hidden = t === 0;
+  }
+
+  function applyTextScale() {
+    var sheet = document.getElementById("chord-sheet");
+    if (sheet) sheet.style.setProperty("--chord-text-scale", TEXT_SCALE_STEPS[textScaleIndex]);
+    var display = document.getElementById("chord-textsize-display");
+    if (display) display.textContent = TEXT_SCALE_LABELS[textScaleIndex];
+  }
+
+  // Previous/next move through CHORD_DATA in its existing display order
+  // (Featured -> Around the Fire -> When the Fire's Dying -> Closing Song),
+  // the same order the song list itself renders in -- wrapping at either
+  // end. Exactly equivalent to closing the viewer and picking the next
+  // card by hand, just without leaving the sheet.
+  function updatePrevNextButtons() {
+    var els = chordViewerEls();
+    if (!els.prevBtn || !els.nextBtn) return;
+    var hasMultiple = CHORD_DATA.length > 1;
+    els.prevBtn.hidden = !hasMultiple;
+    els.nextBtn.hidden = !hasMultiple;
+  }
+
+  function stepToAdjacentSong(delta) {
+    var idx = CHORD_DATA.findIndex(function (e) { return e.id === chordViewerState.currentId; });
+    if (idx === -1 || CHORD_DATA.length < 2) return;
+    var nextIdx = (idx + delta + CHORD_DATA.length) % CHORD_DATA.length;
+    openChordViewer(CHORD_DATA[nextIdx].id);
+  }
+
   // startElapsedSec is optional (defaults to a fresh 0 start, unchanged from
   // before) -- Campfire Groups passes a non-zero value so a late joiner (or a
   // resync after reconnecting) opens the sheet already positioned where the
@@ -795,6 +893,7 @@
     stopAutoScroll();
     chordViewerState.currentId = id;
     chordViewerState.speedIndex = DEFAULT_SPEED_INDEX;
+    chordViewerState.transpose = 0;
     chordViewerState.currentTime = startElapsedSec > 0 ? startElapsedSec : 0;
     updateSpeedDisplay();
     chordViewerState.lastFocused = document.activeElement;
@@ -1018,7 +1117,40 @@
     var speedUp = document.getElementById("chord-speed-up");
     if (speedUp) speedUp.addEventListener("click", function () { changeSpeed(1); });
 
+    var transposeDown = document.getElementById("chord-transpose-down");
+    if (transposeDown) transposeDown.addEventListener("click", function () { changeTranspose(-1); });
+    var transposeUp = document.getElementById("chord-transpose-up");
+    if (transposeUp) transposeUp.addEventListener("click", function () { changeTranspose(1); });
+    if (els.transposeReset) els.transposeReset.addEventListener("click", function () {
+      chordViewerState.transpose = 0;
+      renderChordSheet();
+    });
+
+    var textSizeDown = document.getElementById("chord-textsize-down");
+    if (textSizeDown) textSizeDown.addEventListener("click", function () { changeTextScale(-1); });
+    var textSizeUp = document.getElementById("chord-textsize-up");
+    if (textSizeUp) textSizeUp.addEventListener("click", function () { changeTextScale(1); });
+    applyTextScale();
+
+    if (els.prevBtn) els.prevBtn.addEventListener("click", function () { stepToAdjacentSong(-1); });
+    if (els.nextBtn) els.nextBtn.addEventListener("click", function () { stepToAdjacentSong(1); });
+
     initChordEmbers();
+  }
+
+  function changeTranspose(delta) {
+    var next = chordViewerState.transpose + delta;
+    if (next < -TRANSPOSE_MAX || next > TRANSPOSE_MAX) return;
+    chordViewerState.transpose = next;
+    renderChordSheet();
+  }
+
+  function changeTextScale(delta) {
+    var next = textScaleIndex + delta;
+    if (next < 0 || next >= TEXT_SCALE_STEPS.length) return;
+    textScaleIndex = next;
+    try { localStorage.setItem(TEXT_SCALE_KEY, String(textScaleIndex)); } catch (e) {}
+    applyTextScale();
   }
 
   function loadHeard() {
@@ -1320,6 +1452,13 @@
     var track = document.createElement("article");
     track.className = "track reveal";
     track.dataset.mood = song.mood;
+    track.dataset.artist = song.artist;
+    // Every song has a full chord sheet (see toChordEntry/CHORD_DATA_BY_ID
+    // above) -- difficulty is read from there rather than duplicated onto
+    // the plain song-list objects, so there's exactly one place it's ever
+    // written down.
+    var chordEntry = CHORD_DATA_BY_ID[song.id];
+    track.dataset.difficulty = chordEntry ? chordEntry.difficulty : "";
     track.style.setProperty("--reveal-delay", Math.min(index * 45, 360) + "ms");
     track.style.setProperty("--row-pad", (14 + (hashString(song.title) % 7)) + "px");
 
@@ -1354,6 +1493,12 @@
       capoSpan.className = "capo-meta";
       capoSpan.textContent = " · " + song.capo;
       meta.appendChild(capoSpan);
+    }
+    if (chordEntry && chordEntry.difficulty) {
+      var diffSpan = document.createElement("span");
+      diffSpan.className = "difficulty-meta";
+      diffSpan.textContent = " · " + chordEntry.difficulty;
+      meta.appendChild(diffSpan);
     }
 
     var detail = document.createElement("p");
@@ -1520,22 +1665,93 @@
     buildFeatureCard(document.getElementById("featured-card"), FEATURED);
     buildFeatureCard(document.getElementById("finale-card"), FINALE);
 
+    populateArtistFilter();
     updateProgress();
   }
 
-  function initCategories() {
-    var pills = document.querySelectorAll(".tag-filter");
+  // ---- search / mood / difficulty / artist filtering ----------------------
+  // Four independent conditions, all AND'd together -- mood and difficulty
+  // each read from whichever of their own pills is currently .is-active,
+  // search and artist read directly from their own control. Centralized
+  // here (rather than each control toggling .is-hidden on its own, as mood
+  // alone used to) specifically so they combine correctly instead of one
+  // control clobbering another's result.
+  function currentSearchText() {
+    var el = document.getElementById("song-search");
+    return el ? el.value.trim().toLowerCase() : "";
+  }
+  function currentArtistFilter() {
+    var el = document.getElementById("artist-filter");
+    return el ? el.value : "all";
+  }
+  function activeFilterValue(groupId) {
+    var active = document.querySelector("#" + groupId + " .tag-filter.is-active");
+    return active ? (active.dataset.mood || active.dataset.difficulty) : "all";
+  }
+
+  function applyFilters() {
+    var mood = activeFilterValue("categories");
+    var difficulty = activeFilterValue("difficulty-categories");
+    var artist = currentArtistFilter();
+    var search = currentSearchText();
+
+    var anyVisible = false;
+    document.querySelectorAll("#list-main .track, #list-dying .track").forEach(function (track) {
+      var matchesMood = mood === "all" || track.dataset.mood === mood;
+      var matchesDifficulty = difficulty === "all" || (track.dataset.difficulty || "").indexOf(difficulty) !== -1;
+      var matchesArtist = artist === "all" || track.dataset.artist === artist;
+      var matchesSearch = !search ||
+        track.querySelector(".track-title").textContent.toLowerCase().indexOf(search) !== -1 ||
+        (track.dataset.artist || "").toLowerCase().indexOf(search) !== -1;
+      var show = matchesMood && matchesDifficulty && matchesArtist && matchesSearch;
+      track.classList.toggle("is-hidden", !show);
+      if (show) anyVisible = true;
+    });
+
+    var emptyState = document.getElementById("song-search-empty");
+    if (emptyState) emptyState.hidden = anyVisible;
+  }
+
+  function wirePillGroup(groupId) {
+    var pills = document.querySelectorAll("#" + groupId + " .tag-filter");
     pills.forEach(function (pill) {
       pill.addEventListener("click", function () {
         pills.forEach(function (p) { p.classList.remove("is-active"); });
         pill.classList.add("is-active");
-        var mood = pill.dataset.mood;
-        document.querySelectorAll("#list-main .track, #list-dying .track").forEach(function (track) {
-          var show = mood === "all" || track.dataset.mood === mood;
-          track.classList.toggle("is-hidden", !show);
-        });
+        applyFilters();
       });
     });
+  }
+
+  function initCategories() {
+    wirePillGroup("categories");
+    wirePillGroup("difficulty-categories");
+  }
+
+  // Built from the real song data rather than typed by hand into the HTML,
+  // so it can never drift out of sync with who's actually in the playlist.
+  function populateArtistFilter() {
+    var select = document.getElementById("artist-filter");
+    if (!select) return;
+    var artists = [];
+    var seen = {};
+    ALL_SONGS.forEach(function (s) {
+      if (!seen[s.artist]) { seen[s.artist] = true; artists.push(s.artist); }
+    });
+    artists.sort();
+    artists.forEach(function (name) {
+      var opt = document.createElement("option");
+      opt.value = name;
+      opt.textContent = name;
+      select.appendChild(opt);
+    });
+  }
+
+  function initSearch() {
+    var input = document.getElementById("song-search");
+    if (input) input.addEventListener("input", applyFilters);
+    var select = document.getElementById("artist-filter");
+    if (select) select.addEventListener("change", applyFilters);
   }
 
   function sparkBurst() {
@@ -1569,11 +1785,15 @@
 
       var pills = document.querySelectorAll(".tag-filter");
       pills.forEach(function (p) { p.classList.remove("is-active"); });
-      var allPill = document.querySelector('.tag-filter[data-mood="all"]');
-      if (allPill) allPill.classList.add("is-active");
-      document.querySelectorAll("#list-main .track, #list-dying .track").forEach(function (track) {
-        track.classList.remove("is-hidden");
-      });
+      var allMoodPill = document.querySelector('.tag-filter[data-mood="all"]');
+      if (allMoodPill) allMoodPill.classList.add("is-active");
+      var allDifficultyPill = document.querySelector('.tag-filter[data-difficulty="all"]');
+      if (allDifficultyPill) allDifficultyPill.classList.add("is-active");
+      var searchInput = document.getElementById("song-search");
+      if (searchInput) searchInput.value = "";
+      var artistSelect = document.getElementById("artist-filter");
+      if (artistSelect) artistSelect.value = "all";
+      applyFilters();
 
       var tracks = document.querySelectorAll("#list-main .track, #list-dying .track");
       if (!tracks.length) return;
@@ -1953,6 +2173,7 @@
       window.CampfireAuth.onChange(handleFavouritesAuthChange);
     }
     initCategories();
+    initSearch();
     initShuffle();
     initReveal();
     initEmbers();

@@ -41,6 +41,10 @@
     <path d="M16.3 8.6a5 5 0 0 1 0 6.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
     <path d="M18.7 6.1a8.5 8.5 0 0 1 0 11.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" opacity="0.6"/>
   </symbol>
+  <symbol id="icon-search" viewBox="0 0 24 24">
+    <circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/>
+    <path d="M15.5 15.5 L21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  </symbol>
 </svg>
 
 <div class="auth-widget">
@@ -114,6 +118,16 @@
       <span class="section-count">sixteen songs &mdash; no barre chords required to sing along</span>
     </div>
 
+    <section class="search-bar reveal" data-reveal>
+      <label class="search-field" for="song-search">
+        <svg class="icon search-field-icon" aria-hidden="true"><use href="#icon-search"></use></svg>
+        <input type="search" id="song-search" placeholder="Search songs or artists&hellip;" autocomplete="off" aria-label="Search songs or artists">
+      </label>
+      <select class="artist-select" id="artist-filter" aria-label="Filter by artist">
+        <option value="all">All artists</option>
+      </select>
+    </section>
+
     <section class="control-bar reveal" data-reveal>
       <div class="categories" id="categories" role="group" aria-label="Filter by mood">
         <button class="tag-filter is-active" type="button" data-mood="all">All<svg class="scribble-underline" viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true"><use href="#scribble-underline"></use></svg></button>
@@ -130,6 +144,14 @@
         </div>
       </div>
     </section>
+
+    <div class="categories categories-difficulty" id="difficulty-categories" role="group" aria-label="Filter by difficulty">
+      <button class="tag-filter is-active" type="button" data-difficulty="all">All levels<svg class="scribble-underline" viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true"><use href="#scribble-underline"></use></svg></button>
+      <button class="tag-filter" type="button" data-difficulty="Easy">Easy<svg class="scribble-underline" viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true"><use href="#scribble-underline"></use></svg></button>
+      <button class="tag-filter" type="button" data-difficulty="Medium">Medium<svg class="scribble-underline" viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true"><use href="#scribble-underline"></use></svg></button>
+    </div>
+
+    <p class="song-search-empty" id="song-search-empty" hidden>No songs match that search &mdash; try a different title, artist, or filter.</p>
 
     <div class="song-list" id="list-main"></div>
   </section>
@@ -445,6 +467,22 @@
 
     <div class="chord-strum-row" id="chord-strum-row"></div>
 
+    <div class="chord-tools-row">
+      <div class="chord-tool-group">
+        <span class="chord-tool-label">Key</span>
+        <button type="button" class="chord-ctrl" id="chord-transpose-down" aria-label="Transpose down a semitone">&minus;</button>
+        <span class="chord-tool-display" id="chord-transpose-display" aria-live="polite">Original key</span>
+        <button type="button" class="chord-ctrl" id="chord-transpose-up" aria-label="Transpose up a semitone">+</button>
+        <button type="button" class="chord-tool-reset" id="chord-transpose-reset" hidden>Reset</button>
+      </div>
+      <div class="chord-tool-group">
+        <span class="chord-tool-label">Text</span>
+        <button type="button" class="chord-ctrl" id="chord-textsize-down" aria-label="Smaller text">A&minus;</button>
+        <span class="chord-tool-display" id="chord-textsize-display" aria-live="polite">Default</span>
+        <button type="button" class="chord-ctrl" id="chord-textsize-up" aria-label="Larger text">A+</button>
+      </div>
+    </div>
+
     <div class="chord-howto" id="chord-howto">
       <button type="button" class="chord-howto-toggle" id="chord-howto-toggle" aria-expanded="false" aria-controls="chord-howto-panel">
         How to play these chords <span class="chord-howto-arrow" aria-hidden="true">&#8594;</span>
@@ -462,9 +500,11 @@
     <div class="chord-countin" id="chord-countin" aria-hidden="true"></div>
 
     <div class="chord-playbar">
+      <button type="button" class="chord-nav-btn" id="chord-prev" aria-label="Previous song" hidden>&#8249;</button>
       <button type="button" class="chord-play-btn" id="chord-play-toggle" aria-pressed="false">
         <span id="chord-play-label">&#9654; Play</span>
       </button>
+      <button type="button" class="chord-nav-btn" id="chord-next" aria-label="Next song" hidden>&#8250;</button>
       <div class="chord-speed-group">
         <button type="button" class="chord-ctrl" id="chord-speed-down">Slower</button>
         <span class="chord-speed-display" id="chord-speed-display" aria-live="polite">1.0x</span>
