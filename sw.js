@@ -1,6 +1,6 @@
 "use strict";
 
-var CACHE_NAME = "campfire-songs-v6";
+var CACHE_NAME = "campfire-songs-v5";
 var PRECACHE_URLS = [
   "index.html",
   "tuner.html",
@@ -27,8 +27,7 @@ var PRECACHE_URLS = [
   "pwa.js",
   "manifest.json",
   "icons/icon-192.png",
-  "icons/icon-512.png",
-  "images/campfire-gathering.webp"
+  "icons/icon-512.png"
 ];
 
 self.addEventListener("install", function (event) {

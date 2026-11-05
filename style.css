@@ -182,61 +182,6 @@ button { font: inherit; color: inherit; }
   translate: 0 calc(var(--fire-scroll) * 1px);
 }
 
-/* The existing width-based mobile breakpoint doesn't help short *landscape*
-   viewports (e.g. a phone rotated sideways, ~390px tall but well over
-   640px wide) -- min-height:260px alone there can eat well over half the
-   screen, leaving little room for scrolled content to clear this fixed
-   element before it's visually sitting in the same screen band. Only
-   really mattered cosmetically before (soft flame/glow behind scrolled
-   content); matters more now that this band can show the photo below. */
-@media (max-height: 480px) {
-  .campfire-scene { height: 30vh; min-height: 130px; }
-}
-
-/* The gathering -- a real photo supplying the people, kept strictly behind
-   every other element in this scene (first in source order) so the live,
-   animated flame/logs/embers below always paint on top and stay the actual
-   fire the user is looking at. The photo's own baked-in fire is masked out
-   through the middle so the two never visually compete -- it contributes
-   the people and the warm ambient light, not a second flame. */
-.campfire-photo {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center 68%;
-  filter: saturate(1.1) brightness(0.8) contrast(1.1) sepia(0.12);
-  -webkit-mask-image: linear-gradient(90deg, black 0%, black 24%, transparent 46%, transparent 54%, black 76%, black 100%);
-  mask-image: linear-gradient(90deg, black 0%, black 24%, transparent 46%, transparent 54%, black 76%, black 100%);
-}
-.campfire-photo-fade {
-  position: absolute;
-  inset: 0;
-  /* The hero's own button row can fall as low as ~64% up this box on a
-     typical viewport (measured directly, not guessed) -- fully hidden by
-     55% leaves real margin before that, so the photo never shows through
-     behind text or buttons regardless of exact viewport height. */
-  background:
-    linear-gradient(to top, transparent 30%, var(--navy-deep) 55%),
-    linear-gradient(to bottom, transparent 72%, rgba(3, 5, 10, 0.6) 100%);
-}
-
-/* .campfire-scene's height tracks the viewport (42vh), but the hero button
-   row's own position doesn't shrink proportionally -- so on a shorter
-   viewport the buttons land at a *higher* percentage up the (now smaller)
-   scene box, eating into the 55% margin above. Measured directly: a 768px-
-   tall viewport (e.g. a tablet in landscape) puts the button row right at
-   that 55% line, with visible glow behind "Groups". Tighten the threshold
-   for any viewport short enough for this to matter. */
-@media (max-height: 820px) {
-  .campfire-photo-fade {
-    background:
-      linear-gradient(to top, transparent 22%, var(--navy-deep) 44%),
-      linear-gradient(to bottom, transparent 72%, rgba(3, 5, 10, 0.6) 100%);
-  }
-}
-
 body.embers-low .campfire-scene {
   opacity: 0.55;
   transform: scale(0.88) translateY(6%);
@@ -1833,16 +1778,4 @@ body.chord-viewer-open { overflow: hidden; }
   .head-quiet { text-align: left; }
 
   .campfire-scene { height: 34vh; }
-
-  /* .hero-actions stacks into a column of 4 buttons at this width (see
-     above), reaching much further down the page than the single-row
-     desktop version -- measured directly on a 375x667 viewport, its
-     bottom edge can land only ~36% up this (shorter, 34vh/min-height
-     floor) scene box. Tightened so the photo is fully hidden well below
-     that regardless of exact device height. */
-  .campfire-photo-fade {
-    background:
-      linear-gradient(to top, transparent 12%, var(--navy-deep) 26%),
-      linear-gradient(to bottom, transparent 72%, rgba(3, 5, 10, 0.6) 100%);
-  }
 }
