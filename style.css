@@ -1250,6 +1250,43 @@ body.campfire-mode .quote {
   text-shadow: 0 0 22px rgba(255, 160, 90, 0.4);
 }
 
+/* ---------- connectivity banner ---------- */
+/* Populated by connectivity.js on every page. Sits above everything else
+   (including the auth widget and modals) since it's reporting on the
+   whole app's ability to reach the network, not one feature's state. */
+.connectivity-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  padding:
+    max(10px, env(safe-area-inset-top, 0px))
+    max(16px, env(safe-area-inset-right, 0px))
+    10px
+    max(16px, env(safe-area-inset-left, 0px));
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.01em;
+  text-align: center;
+  color: var(--cream);
+  background: rgba(60, 30, 12, 0.96);
+  border-bottom: 1px solid rgba(230, 180, 120, 0.3);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.connectivity-banner.is-back-online {
+  background: rgba(20, 60, 32, 0.96);
+  border-bottom-color: rgba(140, 220, 160, 0.3);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .connectivity-banner { animation: connectivityBannerIn 0.25s ease; }
+}
+@keyframes connectivityBannerIn {
+  from { transform: translateY(-100%); }
+  to { transform: translateY(0); }
+}
+
 /* ---------- atmosphere controls (campfire mode + sound) ---------- */
 .atmosphere-controls {
   position: fixed;
@@ -1326,7 +1363,11 @@ body.campfire-mode .quote {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
+  padding:
+    max(24px, env(safe-area-inset-top, 0px))
+    max(24px, env(safe-area-inset-right, 0px))
+    max(24px, env(safe-area-inset-bottom, 0px))
+    max(24px, env(safe-area-inset-left, 0px));
   background: rgba(3, 5, 10, 0.86);
   opacity: 0;
   visibility: hidden;

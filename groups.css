@@ -184,7 +184,7 @@
    chord-viewer's own markup or engine. */
 .groups-float-bar {
   position: fixed;
-  top: 12px;
+  top: max(12px, env(safe-area-inset-top, 0px));
   left: 50%;
   transform: translateX(-50%);
   z-index: 70;
