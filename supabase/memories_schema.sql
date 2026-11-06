@@ -19,10 +19,11 @@
 --     storage involved.
 --
 -- Also run this once in the Auth settings: Authentication > URL
--- Configuration > Redirect URLs -- add this site's URL (e.g.
--- https://ryanenglishby.github.io/Campfire-playlists/) so the magic-link
--- sign-in email can actually redirect back here. Without that step,
--- clicking the emailed link will fail or land on the wrong page.
+-- Configuration > Redirect URLs -- add this site's account page (e.g.
+-- https://ryanenglishby.github.io/Campfire-playlists/account.html) so
+-- sign-up confirmation and password-reset emails (see account_schema.sql
+-- and auth.js) can actually redirect back here. Without that step,
+-- clicking either emailed link will fail or land on the wrong page.
 --
 -- Safe to re-run: every statement below is idempotent.
 
