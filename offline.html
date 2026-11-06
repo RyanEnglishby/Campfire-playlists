@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>You&rsquo;re offline &mdash; Camp Chord</title>
+<meta name="theme-color" content="#03050a">
+<meta name="robots" content="noindex">
+<!--
+  Served by sw.js as the last-resort fallback for a navigation that has
+  no network and no matching cache entry (e.g. a page never visited
+  before this device went offline). Deliberately self-contained --
+  no external stylesheet, font, or script -- so it still renders
+  correctly even in the one situation where nothing else on the site
+  can be assumed to be cached yet.
+-->
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: #03050a;
+    color: #f3ece1;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+  }
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    min-height: 100%;
+    padding:
+      max(32px, env(safe-area-inset-top, 0px))
+      max(24px, env(safe-area-inset-right, 0px))
+      max(32px, env(safe-area-inset-bottom, 0px))
+      max(24px, env(safe-area-inset-left, 0px));
+    text-align: center;
+    background-image: radial-gradient(60% 50% at 50% 70%, rgba(227, 120, 42, 0.16), transparent 70%);
+  }
+  .flame {
+    width: 56px;
+    height: 56px;
+  }
+  h1 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  p {
+    margin: 0;
+    max-width: 38ch;
+    font-size: 15px;
+    line-height: 1.5;
+    color: rgba(243, 236, 225, 0.72);
+  }
+  button {
+    margin-top: 6px;
+    font: inherit;
+    font-size: 14px;
+    color: #f3ece1;
+    background: rgba(227, 162, 92, 0.12);
+    border: 1px solid rgba(227, 162, 92, 0.45);
+    border-radius: 999px;
+    padding: 11px 22px;
+    cursor: pointer;
+  }
+  button:hover { background: rgba(227, 162, 92, 0.2); }
+  a {
+    color: #e3a25c;
+    font-size: 13px;
+  }
+</style>
+</head>
+<body>
+  <svg class="flame" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path d="M12 2c.6 2 .2 3.2-.7 4.3-1 1.2-2.3 2.3-2.3 4.4a3 3 0 0 0 6 0c0-.9-.3-1.5-.7-2.1.8.6 1.7 1.8 1.7 3.6a4 4 0 0 1-8 0c0-3.6 2.4-5.1 3.3-6.8C11.9 4.4 12 3.2 12 2Z" fill="#e3a25c"/>
+  </svg>
+  <h1>You&rsquo;re offline</h1>
+  <p>This page hasn&rsquo;t been saved for offline use yet. Reconnect and it&rsquo;ll be available next time, even without a signal.</p>
+  <button type="button" onclick="location.reload()">Try again</button>
+  <a href="index.html">Back to Camp Chord</a>
+</body>
+</html>
